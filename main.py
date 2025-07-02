@@ -117,7 +117,6 @@ async def main():
             print("Invalid controller type in config.ini. Please set 'type' to 0, 1, or 2.\nDefaulting to both Joy-Cons.")
             await init_controller("Joy-Con", "Left", config["orientation"], 0)
             await init_controller("Joy-Con", "Right", config["orientation"], 0)
-            return
         
         while True:
             await asyncio.sleep(1)
