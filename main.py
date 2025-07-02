@@ -6,7 +6,8 @@ manufact = {
     "id": 0x0553,  # Nintendo Co., Ltd. (https://www.bluetooth.com/specifications/assigned-numbers/company-identifiers/)
     "data-prefix": bytes([0x01, 0x00, 0x03, 0x7e, 0x05])  # Manufacturer data prefix for Joy-Con (I hope this prefix is correct, and it same for everyone)
 }
-UUID = "ab7de9be-89fe-49ad-828f-118f09df7fd2"
+UUID_NOTIFY = "ab7de9be-89fe-49ad-828f-118f09df7fd2"
+UUID_CMD = "649d4ac9-8eb7-4e6c-af44-1ea54fe5f005"
 
 #Config variables (by default)
 config = {
@@ -135,19 +136,23 @@ async def main():
 
 async def handle_duo_joycons(client, side):
     from handles.duo_joycon import notify_duo_joycons
+    data = bytes.fromhex('09910007000800000100000000000000') # Found in : https://github.com/darthcloud/BlueRetro/
+    await client.write_gatt_char(UUID_CMD, data)
 
     def notification_handler(sender, data):
         notify_duo_joycons(client, side, data)
 
-    await client.start_notify(UUID, notification_handler)
+    await client.start_notify(UUID_NOTIFY, notification_handler)
 
 async def handle_single_joycon(client, side, orientation):
     from handles.single_joycon import notify_duo_joycons
+    data = bytes.fromhex('09910007000800000100000000000000') # Found in : https://github.com/darthcloud/BlueRetro/
+    await client.write_gatt_char(UUID_CMD, data)
 
     def notification_handler(sender, data):
         notify_duo_joycons(client, side, orientation, data)
 
-    await client.start_notify(UUID, notification_handler)
+    await client.start_notify(UUID_NOTIFY, notification_handler)
 
 
 
