@@ -8,7 +8,7 @@ This temporary project allows you to connect your **Nintendo Switch 2 Joy-Con** 
 
 1. Clone this repository :
    ```bash
-   git clone https://github.com/your-name/jc2x360.git
+   git clone https://github.com/Logan-Gaillard/jc2x360.git
    cd jc2x360
    ```
 
@@ -24,27 +24,15 @@ This temporary project allows you to connect your **Nintendo Switch 2 Joy-Con** 
     https://sourceforge.net/projects/vjoystick/
 
 ## 🕹️ Usage
-1. Open main.py in your code editor.
 
-2. Replace MAC_JOYCON_LEFT and MAC_JOYCON_RIGHT with the MAC address of your Joy-Con 2.
-
-3. Hold the sync button until the LED search animation starts.
-
-4. Run the script :
+1. Run the script :
     ```bash
     python main.py
     ```
 
+2. Follow the instructions displayed when the script starts.
+
 Your Joy-Con will now act like a virtual Xbox 360 controller.
-
-## 🔍 How to find your Joy-Con MAC address
-1. Connect the Joy-Con to your Switch.
-
-2. Go to System Settings > Controllers and Sensors.
-
-3. Select Bluetooth Devices.
-
-4. The MAC address will appear at the bottom of the screen.
 
 ## Author
 Made by **Octokling**

@@ -1,0 +1,112 @@
+import sys
+import platform
+import os
+import ctypes
+
+class JoyConLeft:
+    def __init__(self):
+        self.name = "JoyCon Left"
+        self.mac_address = ""
+        
+        self.buttons = {
+            #these buttons is mapped to Upright usage (it need to invert the mapping for a sideways usage)
+            "ZL": False,
+            "L": False,
+            "Minus": False,
+            "SL": False,
+            "SR": False,
+            "Left": False,
+            "Down": False,
+            "Up": False,
+            "Right": False,
+            "L3": False,
+            "Capture": False,
+        }
+        self.analog_stick = {
+            #these values is mapped to Upright usage (it need to invert the mapping for a sideways usage)
+            "X": 0.0,
+            "Y": 0.0
+        }
+        #self.accelerometer = {
+        #    "X": 0.0,
+        #    "Y": 0.0,
+        #    "Z": 0.0
+        #}
+        #self.gyroscope = {
+        #    "X": 0.0,
+        #    "Y": 0.0,
+        #    "Z": 0.0
+        #}
+        self.battery_level = 100.0
+        self.alertSent = False
+        self.is_connected = False
+
+    def update(self, datas):
+        # Update button states based on the received data
+        btnDatas = datas[5] << 8 | datas[6]
+        JoystickDatas = datas[10:13]
+
+        self.buttons["SL"] = bool(btnDatas & 0x0020)
+        self.buttons["SR"] = bool(btnDatas & 0x0010)
+        self.buttons["Minus"] = bool(btnDatas & 0x0100)
+        self.buttons["L"] = bool(btnDatas & 0x0040)
+        self.buttons["ZL"] = bool(btnDatas & 0x0080)
+        self.buttons["Left"] = bool(btnDatas & 0x0008)
+        self.buttons["Down"] = bool(btnDatas & 0x0001)
+        self.buttons["Up"] = bool(btnDatas & 0x0002)
+        self.buttons["Right"] = bool(btnDatas & 0x0004)
+        self.buttons["L3"] = bool(btnDatas & 0x0800)
+        self.buttons["Capture"] = bool(btnDatas & 0x2000)
+
+        self.analog_stick["X"], self.analog_stick["Y"] = joystick_decoder(JoystickDatas)
+
+        # Update battery level only if the new value is lower than the current one
+        self.battery_level = round(datas[31] / 255.0 * 100, 1)
+
+        if(self.battery_level < 10.0 and self.is_connected and not self.alertSent):
+            self.notify_low_battery()
+            self.alertSent = True
+
+        self.is_connected = True
+
+    def print_status(self, datas):
+        sys.stdout.write(f"\033[2;0H")
+        print(f"JoyCon Left Status:")
+        print(f"  Buttons: {self.buttons}                    ")
+        print(f"  Analog Stick: {self.analog_stick}                    ")
+        #print(f"  Accelerometer: {self.accelerometer}")
+        #print(f"  Gyroscope: {self.gyroscope}")
+        print(f"  Battery Level: {self.battery_level}%                    ")
+        print(f"  Connected: {self.is_connected}                    ")
+        #print(f"  Datas received: " + str(datas.hex()))
+
+    def setMacAddress(self, mac_address):
+        self.mac_address = mac_address
+
+    def notify_low_battery(self):
+        msg = f"{self.name} : low battery ({self.battery_level}%)"
+
+        if platform.system() == "Windows":
+            ctypes.windll.user32.MessageBoxW(0, msg, "Alert Joy-Con", 0)
+        elif platform.system() == "Linux":
+            os.system(f'notify-send "Alert Joy-Con" "{msg}"')
+        else:
+            print(f"[Alert] {msg}")
+
+def joystick_decoder(data):
+    if len(data) != 3:
+        print("Invalid joystick data length")
+        return 0, 0
+    # Decode the joystick data
+    x = ((data[1] & 0x0F) << 8) | data[0]
+    y = ((data[2] << 4)) | ((data[1] & 0xF0) >> 4)
+
+    # Normalize the values to the range of -1.0 to 1.0
+    x = max(-1.0, min(1.0, (x - 2048) / 2048.0 * 1.7))
+    y = max(-1.0, min(1.0, (y - 2048) / 2048.0 * 1.7))
+
+    # Scale the values to the range of -32768 to 32767
+    x = int(x * 32767)
+    y = int(y * 32767)
+
+    return x, y

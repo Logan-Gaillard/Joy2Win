@@ -1,218 +1,153 @@
-import asyncio
-from bleak import BleakClient
-from pyvjoystick import vigem as vg
+import asyncio, os, configparser
+from bleak import BleakClient, BleakScanner
 
-MAC_JOYCON_LEFT = "xx:xx:xx:xx:xx" # REPLACE with your left Joy-Con MAC
-MAC_JOYCON_RIGHT = "xx:xx:xx:xx:xx"  # REPLACE with your right Joy-Con MAC
-
-# How to find the MAC addresson Nintendo Switch 2 :
-# 1. Connect the Joy-Con to your Switch.
-# 2. Go to System Settings > Controllers and Sensors.
-# 3. Scroll down to "Bluetooth Devices" and select the Joy-Con.
-# 4. The MAC address will be displayed at the bottom of the screen.
-
+# Constants
+manufact = {
+    "id": 0x0553,  # Nintendo Co., Ltd. (https://www.bluetooth.com/specifications/assigned-numbers/company-identifiers/)
+    "data-prefix": bytes([0x01, 0x00, 0x03, 0x7e, 0x05])  # Manufacturer data prefix for Joy-Con (I hope this prefix is correct, and it same for everyone)
+}
 UUID = "ab7de9be-89fe-49ad-828f-118f09df7fd2"
 
-# Init manette virtuelle Xbox 360
-gamepad = vg.VX360Gamepad()
+#Config variables (by default)
+config = {
+    "type": 0,  # 0 = Both JoyCons, 1 = Joycon Left, 2 = Joycon Right
+    "orientation": 0  # 0 = Vertical, 1 = Horizontal
+}
 
-def detect_buttons(type, btn0, btn1):
+clients = []  # List to hold connected clients
 
-    if(btn0 >= 32):
-        if(type == 'l'):
-            #Capture (rien pour XBOX pour l'instant)
-            print("Capture")
-        btn0 -= 32
+async def scan_joycons():
+    device_controller = None
 
+    def callback(device, advertisement_data):
+        nonlocal device_controller
+        data = advertisement_data.manufacturer_data.get(manufact["id"])
+        if not data:
+            return
 
-    if(btn0 >= 16):
-        if (type == 'r'):
-            gamepad.press_button(vg.XUSB_BUTTON.XUSB_GAMEPAD_GUIDE)
-        btn0 -= 16
+        if data.startswith(manufact["data-prefix"]):
+            if not device_controller:
+                print(f"Controller with address: {device.address} found.")
+                device_controller = device
+
+    scanner = BleakScanner(callback)
+    await scanner.start()
+
+    while True:
+        if device_controller:
+            break
+        await asyncio.sleep(0.5)
+    await scanner.stop()
+
+    return device_controller
+
+# Connect the controller and attribute to a notification handler
+async def connect(device_controller):
+    client = BleakClient(device_controller)
+    try:
+        await client.connect()
+        if client.is_connected:
+            return client
+        else:
+            print("Failed to connect.")
+            return None
+    except Exception as e:
+        print(f"Failed to connect to {device_controller}: {e}")
+        return None
+    
+
+def load_config():
+    global config
+    config_parser = configparser.ConfigParser()
+    config_parser.read("config.ini")
+
+    if "Controller" in config_parser:
+        if "type" in config_parser["Controller"]:
+            config["type"] = int(config_parser["Controller"]["type"])
+        if "orientation" in config_parser["Controller"]:
+            config["orientation"] = int(config_parser["Controller"]["orientation"])
     else:
-        if (type == 'r'):
-            gamepad.release_button(vg.XUSB_BUTTON.XUSB_GAMEPAD_GUIDE)
+        print("No 'Controller' section found in config.ini. Using default values.")
 
 
-    if(btn0 >= 8):
-        if(type == 'l'):
-            gamepad.press_button(vg.XUSB_BUTTON.XUSB_GAMEPAD_LEFT_THUMB)
-        btn0 -= 8
+async def init_controller(name, side, orientation, type=0):
+    print(f"Scanning for {name} {side}, press the sync button...")
+    device = await scan_joycons()
+
+    if device:
+        client = await connect(device)
+        if client is not None:
+            clients.append(client)
+
+            print(f"{name} {side} connected successfully.")
+
+            if type == 0:
+                # Notify controller to handle both Joy-Cons, because the controller is connected
+                await handle_duo_joycons(client, side)
+
+        else:
+            print(f"Failed to connect {name} {side}.")
     else:
-        if(type == 'l'):
-            gamepad.release_button(vg.XUSB_BUTTON.XUSB_GAMEPAD_LEFT_THUMB)
-
-
-    if(btn0 >= 4):
-        if (type == 'r'):
-            gamepad.press_button(vg.XUSB_BUTTON.XUSB_GAMEPAD_RIGHT_THUMB)
-        btn0 -= 4
-    else:
-        if (type == 'r'):
-            gamepad.release_button(vg.XUSB_BUTTON.XUSB_GAMEPAD_RIGHT_THUMB)
-
-
-    if(btn0 >= 1):
-        if(type == 'l'):
-            gamepad.press_button(vg.XUSB_BUTTON.XUSB_GAMEPAD_BACK)
-        elif (type == 'r'):
-            gamepad.press_button(vg.XUSB_BUTTON.XUSB_GAMEPAD_START)
-        btn0 -= 1
-    else:
-        if(type == 'l'):
-            gamepad.release_button(vg.XUSB_BUTTON.XUSB_GAMEPAD_BACK)
-        elif (type == 'r'):
-            gamepad.release_button(vg.XUSB_BUTTON.XUSB_GAMEPAD_START)
-
-    #Détection de btn1
-    if(btn1 >= 128):
-        if(type == 'l'):
-            gamepad._report.bLeftTrigger = 255
-        elif (type == 'r'):
-            gamepad._report.bRightTrigger = 255
-        btn1 -= 128
-    else:
-        if(type == 'l'):
-            gamepad._report.bLeftTrigger = 0
-        elif (type == 'r'):
-            gamepad._report.bRightTrigger = 0
-
-
-    if(btn1 >= 64):
-        if(type == 'l'):
-            gamepad.press_button(vg.XUSB_BUTTON.XUSB_GAMEPAD_LEFT_SHOULDER)
-        elif (type == 'r'):
-            gamepad.press_button(vg.XUSB_BUTTON.XUSB_GAMEPAD_RIGHT_SHOULDER)
-        btn1 -= 64
-    else:
-        if(type == 'l'):
-            gamepad.release_button(vg.XUSB_BUTTON.XUSB_GAMEPAD_LEFT_SHOULDER)
-        elif (type == 'r'):
-            gamepad.release_button(vg.XUSB_BUTTON.XUSB_GAMEPAD_RIGHT_SHOULDER)
-
-
-    if(btn1 >= 32): 
-        #SL (rien pour XBOX pour l'instant)
-        btn1 -= 32
-    if(btn1 >= 16):
-        #SR (rien pour XBOX pour l'instant)
-        btn1 -= 16
-
-
-    if(btn1 >= 8):
-        if(type == 'l'):
-            gamepad.press_button(vg.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_LEFT)
-        elif (type == 'r'):
-            gamepad.press_button(vg.XUSB_BUTTON.XUSB_GAMEPAD_B) #Y for XBOX
-        btn1 -= 8
-    else:
-        if(type == 'l'):
-            gamepad.release_button(vg.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_LEFT)
-        elif (type == 'r'):
-            gamepad.release_button(vg.XUSB_BUTTON.XUSB_GAMEPAD_B)
-
-
-    if(btn1 >= 4):
-        if(type == 'l'):
-            gamepad.press_button(vg.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_RIGHT)
-        elif (type == 'r'):
-            gamepad.press_button(vg.XUSB_BUTTON.XUSB_GAMEPAD_A) #X for XBOX
-        btn1 -= 4
-    else:
-        if(type == 'l'):
-            gamepad.release_button(vg.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_RIGHT)
-        elif (type == 'r'):
-            gamepad.release_button(vg.XUSB_BUTTON.XUSB_GAMEPAD_A) 
-
-
-    if(btn1 >= 2):
-        if(type == 'l'):
-            gamepad.press_button(vg.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_UP)
-        elif (type == 'r'):
-            gamepad.press_button(vg.XUSB_BUTTON.XUSB_GAMEPAD_Y) #B for XBOX
-        btn1 -= 2
-    else:
-        if(type == 'l'):
-            gamepad.release_button(vg.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_UP)
-        elif (type == 'r'):
-            gamepad.release_button(vg.XUSB_BUTTON.XUSB_GAMEPAD_Y)
-
-
-    if(btn1 >= 1): 
-        if(type == 'l'):
-            gamepad.press_button(vg.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_DOWN)
-        elif (type == 'r'):
-            gamepad.press_button(vg.XUSB_BUTTON.XUSB_GAMEPAD_X) #A for XBOX
-        btn1 -= 1
-    else:
-        if(type == 'l'):
-            gamepad.release_button(vg.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_DOWN)
-        elif (type == 'r'):
-            gamepad.release_button(vg.XUSB_BUTTON.XUSB_GAMEPAD_X) #A for XBOX
-
-    gamepad.update()
-
-def detect_joystick(type, axis: bytes):
-    rx = axis[0] | ((axis[1] & 0x0F) << 8)
-    ry = (axis[1] >> 4) | (axis[2] << 4)
-
-    if(type == "r"):
-        gamepad.right_joystick(*scale_joystick(rx, ry))
-    elif(type == "l"):
-        gamepad.left_joystick(*scale_joystick(rx, ry))
-
-
-    gamepad.update()
-
-def scale_joystick(raw_x: int, raw_y: int) -> tuple[int, int]:
-    JOYCON_MIN = 700
-    JOYCON_MAX = 3270
-    JOYCON_CENTER = (JOYCON_MAX + JOYCON_MIN) / 2.0  # ≈ 2000
-
-    XBOX_MAX = 32767
-    XBOX_MIN = -32768
-
-    centered_x = float(raw_x) - JOYCON_CENTER
-    normalized_x = centered_x / ((JOYCON_MAX - JOYCON_MIN) / 2.0)
-    scaled_x = int(round(normalized_x * XBOX_MAX))
-
-    centered_y = float(raw_y) - JOYCON_CENTER
-    normalized_y = centered_y / ((JOYCON_MAX - JOYCON_MIN) / 2.0)
-    scaled_y = int(round(normalized_y * XBOX_MAX))
-
-    scaled_x = max(XBOX_MIN, min(XBOX_MAX, scaled_x))
-    scaled_y = max(XBOX_MIN, min(XBOX_MAX, scaled_y))
-
-    return scaled_x, scaled_y
-
-def on_notification_joyL(_, data: bytes):
-
-    #print(data.hex())
-    detect_buttons("l", data[5], data[6])
-    detect_joystick("l", data[10:13])
-
-def on_notification_joyR(_, data: bytes):
-    #print(data.hex())
-    detect_buttons("r", data[5], data[4])
-    detect_joystick("r", data[13:16])
-
+        print(f"Joy-Con {name} {side} not found.")
 
 async def main():
-    loop = asyncio.get_event_loop()
-
-    client_left = BleakClient(MAC_JOYCON_LEFT, pair=False)
-    client_right = BleakClient(MAC_JOYCON_RIGHT, pair=False)
-
-    await client_left.connect()
-    await client_right.connect()
-
     try:
-        await client_left.start_notify(UUID, lambda h, d: loop.run_in_executor(None, on_notification_joyL, h, d))
-        await client_right.start_notify(UUID, lambda h, d: loop.run_in_executor(None, on_notification_joyR, h, d))
-        print("Joycons connected and notifications started.")
-        await asyncio.Event().wait()
+        os.system("cls" if os.name == "nt" else "clear")
+        load_config()
+
+        if(not config["orientation"] == 0 and not config["orientation"] == 1):
+            print("Invalid orientation in config.ini. Please set 'orientation' to 0 (Vertical) or 1 (Horizontal).\nDefaulting to vertical.")
+            config["orientation"] = 0  # Default to vertical if invalid
+
+
+        if config["type"] == 0:
+            await init_controller("Joy-Con", "Left", config["orientation"], 0)
+            await init_controller("Joy-Con", "Right", config["orientation"], 0)
+        elif config["type"] == 1:
+            await init_controller("Joy-Con", "Left", config["orientation"], 1)
+        elif config["type"] == 2:
+            await init_controller("Joy-Con", "Right", config["orientation"], 2)
+        else:
+            print("Invalid controller type in config.ini. Please set 'type' to 0, 1, or 2.\nDefaulting to both Joy-Cons.")
+            await init_controller("Joy-Con", "Left", config["orientation"], 0)
+            await init_controller("Joy-Con", "Right", config["orientation"], 0)
+            return
+        
+        while True:
+            await asyncio.sleep(1)
+
+    except (KeyboardInterrupt, asyncio.CancelledError):
+        print("Interrupting...")
+
     finally:
-        await client_left.disconnect()
-        await client_right.disconnect()
+        print("Disconnecting controllers...")
+        for client in clients:
+            if client.is_connected:
+                await client.disconnect()
+        print("All controllers disconnected.")
+
+
+
+async def handle_duo_joycons(client, side):
+    from handles.duo_joycon import notify_duo_joycons
+
+    def notification_handler(sender, data):
+        notify_duo_joycons(client, side, data)
+
+    await client.start_notify(UUID, notification_handler)
+
+
+
+
+#Used to get the manufacturer data from joycons
+#async def scan_all():
+    #devices = await BleakScanner.discover()
+    #for d in devices:
+    #    md = d.metadata.get("manufacturer_data", {})
+    #    if md:
+    #        for manu_id, data_bytes in md.items():
+    #            print(f"Device: {d.name}, ID: {manu_id}, Data: {data_bytes.hex()}")
+
+
 if __name__ == "__main__":
     asyncio.run(main())
