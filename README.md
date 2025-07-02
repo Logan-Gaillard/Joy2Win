@@ -25,12 +25,14 @@ This temporary project allows you to connect your **Nintendo Switch 2 Joy-Con** 
 
 ## 🕹️ Usage
 
-1. Run the script :
+1. Copy the `config-exemple.ini` file, rename it to `config.ini`, and edit it according to your needs.
+
+2. Run the script :
     ```bash
     python main.py
     ```
 
-2. Follow the instructions displayed when the script starts.
+3. Follow the instructions displayed when the script starts.
 
 Your Joy-Con will now act like a virtual Xbox 360 controller.
 
