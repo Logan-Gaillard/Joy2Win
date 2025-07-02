@@ -5,7 +5,9 @@ import ctypes
 
 class JoyConLeft:
     def __init__(self):
-        self.name = "JoyCon Left"
+        self.name = "Joy-Con"
+        self.side = "Left"
+        self.orientation = 0  # Default orientation is vertical
         self.mac_address = ""
         
         self.buttons = {
@@ -58,7 +60,7 @@ class JoyConLeft:
         self.buttons["L3"] = bool(btnDatas & 0x0800)
         self.buttons["Capture"] = bool(btnDatas & 0x2000)
 
-        self.analog_stick["X"], self.analog_stick["Y"] = joystick_decoder(JoystickDatas)
+        self.analog_stick["X"], self.analog_stick["Y"] = joystick_decoder(JoystickDatas, self.orientation)
 
         # Update battery level only if the new value is lower than the current one
         self.battery_level = round(datas[31] / 255.0 * 100, 1)
@@ -84,7 +86,7 @@ class JoyConLeft:
         self.mac_address = mac_address
 
     def notify_low_battery(self):
-        msg = f"{self.name} : low battery ({self.battery_level}%)"
+        msg = f"{self.name} {self.side} : low battery ({self.battery_level}%)"
 
         if platform.system() == "Windows":
             ctypes.windll.user32.MessageBoxW(0, msg, "Alert Joy-Con", 0)
@@ -93,7 +95,8 @@ class JoyConLeft:
         else:
             print(f"[Alert] {msg}")
 
-def joystick_decoder(data):
+def joystick_decoder(data, orientation):
+
     if len(data) != 3:
         print("Invalid joystick data length")
         return 0, 0
@@ -108,5 +111,12 @@ def joystick_decoder(data):
     # Scale the values to the range of -32768 to 32767
     x = int(x * 32767)
     y = int(y * 32767)
+
+    if orientation == 1:
+        # Invert the X and Y values for horizontal orientation
+        old_x = x
+        old_y = y
+        x = -old_y
+        y = old_x
 
     return x, y

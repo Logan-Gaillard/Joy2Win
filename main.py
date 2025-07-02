@@ -85,6 +85,12 @@ async def init_controller(name, side, orientation, type=0):
                 # Notify controller to handle both Joy-Cons, because the controller is connected
                 await handle_duo_joycons(client, side)
 
+            elif type == 1:
+                await handle_single_joycon(client, side, orientation)
+
+            elif type == 2:
+                await handle_single_joycon(client, side, orientation)
+
         else:
             print(f"Failed to connect {name} {side}.")
     else:
@@ -133,6 +139,14 @@ async def handle_duo_joycons(client, side):
 
     def notification_handler(sender, data):
         notify_duo_joycons(client, side, data)
+
+    await client.start_notify(UUID, notification_handler)
+
+async def handle_single_joycon(client, side, orientation):
+    from handles.single_joycon import notify_duo_joycons
+
+    def notification_handler(sender, data):
+        notify_duo_joycons(client, side, orientation, data)
 
     await client.start_notify(UUID, notification_handler)
 
