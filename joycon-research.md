@@ -6,7 +6,7 @@
 |------|-------------|
 | `fa19b0fb-cd1f-46a7-84a1-bbb09e00c149` | Not crash, does nothing |
 | `649d4ac9-8eb7-4e6c-af44-1ea54fe5f005` | **Command handler** ✅ |
-| `65a724b3-f1e7-4a61-8078-a342376b27ff` | Vibrates + **Crash** (Suspected: HID Vibration?) |
+| `65a724b3-f1e7-4a61-8078-a342376b27ff` | Vibrates + **Crash** (Suspected: CMD Vibration?) |
 | `4147423d-fdae-4df7-a4f7-d23e5df59f8d` | Not crash, does nothing |
 | `c765a961-d9d8-4d36-a20a-5315b111836a` | **Response handler** Can be notify |
 | `640ca58e-0e88-410c-a7f3-426faf2b690b` | Cannot write |
@@ -23,12 +23,26 @@
 | Byte(s) | Meaning |
 |---------|--------|
 | `09` | Command: Set LED |
-| `91` | Request type |
+| `91` | Request type: Request |
 | `00/01` | 00: USB ? / 01: BLE ? - Request interface (BLE?) |
 | `07` | Sub-command: Set LED |
 | `00 08 00 00` | Unknown |
 | `0X` | LED bitmask (4 bits = 4 LEDs, combine to select) |
 | `00 00 00 00 00 00 00` | Padding / reserved  / Jamming ? |
+
+---
+
+## Command make 2 vibration on Pairing (Doing on Switch 2)
+
+```0A 91 01 02 00 04 00 00 03 00 00 00```
+
+| Byte | Meaning |
+|------|---------|
+| `0A` | Command: ??? (for the moment) |
+| `91` | Request type: Request |
+| `01` | Request interface (BLE?) |
+| `02` | Sub-command: ??? (for the moment) |
+| `00 04 00 00 03 00 00 00` | Unknown |
 
 ---
 
@@ -47,7 +61,9 @@
 
 ## Reference
 
-- LED command based on: [BlueRetro GitHub Repo](https://github.com/darthcloud/BlueRetro/)
+- LED command based on: [BlueRetro's Repo](https://github.com/darthcloud/BlueRetro/)
+- Dump Wireshark sniffing Bluetooth: [ndeadly's Repo](https://github.com/ndeadly/switch2_controller_research/tree/master)
+
 
 ## Notice
 

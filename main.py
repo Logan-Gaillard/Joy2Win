@@ -139,6 +139,11 @@ async def handle_duo_joycons(client, side):
     data = bytes.fromhex('09910007000800000100000000000000') # Found in : https://github.com/darthcloud/BlueRetro/
     await client.write_gatt_char(UUID_CMD, data)
 
+    await asyncio.sleep(0.1)  # Emulate waiting for a response
+
+    data = bytes.fromhex('0A9101020004000003000000')
+    await client.write_gatt_char(UUID_CMD, data)
+
     def notification_handler(sender, data):
         notify_duo_joycons(client, side, data)
 
@@ -147,6 +152,11 @@ async def handle_duo_joycons(client, side):
 async def handle_single_joycon(client, side, orientation):
     from handles.single_joycon import notify_duo_joycons
     data = bytes.fromhex('09910007000800000100000000000000') # Found in : https://github.com/darthcloud/BlueRetro/
+    await client.write_gatt_char(UUID_CMD, data)
+
+    await asyncio.sleep(0.1)  # Emulate waiting for a response
+
+    data = bytes.fromhex('0A9101020004000003000000')
     await client.write_gatt_char(UUID_CMD, data)
 
     def notification_handler(sender, data):

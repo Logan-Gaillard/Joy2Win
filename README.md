@@ -36,5 +36,11 @@ This temporary project allows you to connect your **Nintendo Switch 2 Joy-Con** 
 
 Your Joy-Con will now act like a virtual Xbox 360 controller.
 
+## ✨ Features
+
+- Select usage type and Joy-Con orientation (single or paired, horizontal or vertical (only for single joycon))
+- Player LED indicator support (By default, player 1)
+- Vibration feedback when Joy-Con is successfully connected.
+
 ## Author
 Made by **Octokling**
