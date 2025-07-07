@@ -1,6 +1,6 @@
-# 🎮 Joy-Con 2 to Xbox 360 Virtual Controller
+# 🎮 Joy-Con 2 Windows compatibility
 
-This temporary project allows you to connect your **Nintendo Switch 2 Joy-Con** to a Windows PC and emulate an **Xbox 360 controller** using BLE and ViGEm.
+This temporary project allows you to connect your **Nintendo Switch 2 Joy-Con** to a Windows PC using BLE and vJoy.
 
 ---
 
@@ -8,20 +8,23 @@ This temporary project allows you to connect your **Nintendo Switch 2 Joy-Con** 
 
 1. Clone this repository :
    ```bash
-   git clone https://github.com/Logan-Gaillard/jc2x360.git
-   cd jc2x360
+   git clone https://github.com/Logan-Gaillard/Joy2Win.git
+   cd Joy2Win
    ```
 
 2. Install Python dependencies :
     ```
-    pip install bleak pyvjoystick
+    pip install bleak pyvjoy
     ```
-
-3.  Install the ViGEmBus driver (required for virtual controllers) :
-    https://github.com/ViGEm/ViGEmBus/releases
 
 4.  Install vJoy :
     https://sourceforge.net/projects/vjoystick/
+
+5. Configure vJoy :  
+        - Open "Configure vJoy"  
+        - Select controller n°1  
+        - Set 24 buttons or higher  
+        - Restart your computer  
 
 ## 🕹️ Usage
 
@@ -34,7 +37,7 @@ This temporary project allows you to connect your **Nintendo Switch 2 Joy-Con** 
 
 3. Follow the instructions displayed when the script starts.
 
-Your Joy-Con will now act like a virtual Xbox 360 controller.
+Your Joy-Con 2 will be compatible with your Windows.
 
 ## ✨ Features
 
@@ -42,5 +45,13 @@ Your Joy-Con will now act like a virtual Xbox 360 controller.
 - Player LED indicator support (By default, player 1)
 - Vibration feedback when Joy-Con is successfully connected.
 
+## Repositories
+- [pyvjoy](https://github.com/tidzo/pyvjoy)
+- [switch2_controller_research](https://github.com/ndeadly/switch2_controller_research)
+
 ## Author
 Made by **Octokling**
+
+Helped by :  
+- narr_the_reg
+- ndeadly

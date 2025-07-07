@@ -1,3 +1,5 @@
+# OUTDATED RESEARCH, I'll edit this later
+
 # Joy-Con 2 - BLE UUID Testing & Command Analysis
 
 ## Tested UUIDs (Captured on Joy-Con 2 (R))
@@ -42,7 +44,20 @@
 | `91` | Request type: Request |
 | `01` | Request interface (BLE?) |
 | `02` | Sub-command: ??? (for the moment) |
-| `00 04 00 00 03 00 00 00` | Unknown |
+| `00 04 00 00` | Unknown |
+| `0X` | Type of vibration interaction |
+| `00 00 00` | Unknown |
+
+| X | Meaning |
+| `0` | Nothing |
+| `1` | Simple vibration |
+| `2` | Searching Joy-Con (Vibration + 2 Bip Bip) |
+| `3` | Paired Vibration (2 vibrations) |
+| `4` | Sound (2 différent bip sound like a Switch 2 notification ) UNUSED ? |
+| `5` | Paired Vibration (2 same vibrations) |
+| `6` | First BIP of X=4 |
+| `7` | Second BIP of X=4 |
+| `8 to F` | Nothing |
 
 ---
 
@@ -59,10 +74,36 @@
 
 ---
 
+## Enable motion control :
+First, send this :
+``0C 91 01 02 00 04 00 00 2F 00 00 00``
+
+And after, this :
+``0C 91 01 04 00 04 00 00 2F 00 00 00``
+
+The order and data is verry important.
+Why ?
+We don't know
+
+
+
+## RESUME
+
+### Commands :
+
+| Byte | Meaning |
+|------|---------|
+| `02` | Unknown but answer a lot of datas |
+| `09` | Set LED |
+| `0A` | Vibration ? |
+| `0C` | Unknown |
+
 ## Reference
 
 - LED command based on: [BlueRetro's Repo](https://github.com/darthcloud/BlueRetro/)
-- Dump Wireshark sniffing Bluetooth: [ndeadly's Repo](https://github.com/ndeadly/switch2_controller_research/tree/master)
+- Dump Wireshark sniffing Bluetooth + Helps: [ndeadly's Repo](https://github.com/ndeadly/switch2_controller_research/)
+-  - And his [Mission Control's Repo](https://github.com/ndeadly/MissionControl/)
+-  - Special thanks for his helps
 
 
 ## Notice

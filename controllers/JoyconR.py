@@ -2,6 +2,7 @@ import sys
 import platform
 import os
 import ctypes
+import struct
 
 class JoyConRight:
     def __init__(self):
@@ -15,8 +16,8 @@ class JoyConRight:
             "ZR": False,
             "R": False,
             "Plus": False,
-            "SL": False,
-            "SR": False,
+            "SLR": False,
+            "SRR": False,
             "Y": False,
             "B": False,
             "X": False,
@@ -27,8 +28,8 @@ class JoyConRight:
         }
         self.analog_stick = {
             #these values is mapped to Upright usage (it need to invert the mapping for a sideways usage)
-            "X": 0.0,
-            "Y": 0.0
+            "X": 0,
+            "Y": 0
         }
 
         # I hope i can implement this later with HID
@@ -49,16 +50,35 @@ class JoyConRight:
         self.alertSent = False
         self.is_connected = False
 
-    def update(self, datas):
+    async def update(self, datas):
         # Update button states based on the received data
         btnDatas = datas[4] << 8 | datas[5]
         JoystickDatas = datas[13:16]
 
+        gyroX, gyroY, gyroZ = struct.unpack("<3h", bytes(datas[0x30:0x36]))
+
+        motionsensorDatas = {
+            "timestamp": (datas[0x2A + 0x03] << 24) | (datas[0x2A + 0x02] << 16) | (datas[0x2A + 0x01] << 8) | datas[0x2A],
+            "temperature": (datas[0x2E + 0x01] << 8) | datas[0x2E],
+            #"GyroX": (datas[0x30 + 0x01] << 8) | datas[0x30],
+            "GyroX": gyroX,
+            "?": (datas[0x32 + 0x01] << 8) | datas[0x32],
+            "??": (datas[0x34 + 0x01] << 8) | datas[0x34],
+            "???": (datas[0x36 + 0x01] << 8) | datas[0x36],
+            "????": (datas[0x38 + 0x01] << 8) | datas[0x38],
+            "?????": (datas[0x3A + 0x01] << 8) | datas[0x3A],
+        }
+
+        #print(f"motionsensorDatas: {datas[0x2A:0x3B].hex()}", end=" ")
+        #print(f"timestamp: {motionsensorDatas['timestamp']} soit {motionsensorDatas['timestamp'] / 45000:.1f} s", end=" ")
+        #print(f"temperature: {motionsensorDatas['temperature']} soit {25 + motionsensorDatas['temperature'] / 127:.2f} °C", end=" ")
+        #print(f"GyroX: {motionsensorDatas['GyroX']} (bin: {motionsensorDatas['GyroX']:016b}) (hex: {motionsensorDatas['GyroX']:04x}) = ")
+
         self.buttons["ZR"] = bool(btnDatas & 0x8000)
         self.buttons["R"] = bool(btnDatas & 0x4000)
         self.buttons["Plus"] = bool(btnDatas & 0x0002)
-        self.buttons["SL"] = bool(btnDatas & 0x2000)
-        self.buttons["SR"] = bool(btnDatas & 0x1000)
+        self.buttons["SLR"] = bool(btnDatas & 0x2000)
+        self.buttons["SRR"] = bool(btnDatas & 0x1000)
         self.buttons["Y"] = bool(btnDatas & 0x0100)
         self.buttons["B"] = bool(btnDatas & 0x0400)
         self.buttons["X"] = bool(btnDatas & 0x0200)
@@ -78,17 +98,6 @@ class JoyConRight:
 
         self.is_connected = True
 
-    def print_status(self, datas):
-        sys.stdout.write(f"\033[2;0H")
-        print(f"JoyCon Right Status:")
-        print(f"  Buttons: {self.buttons}                    ")
-        print(f"  Analog Stick: {self.analog_stick}                    ")
-        #print(f"  Accelerometer: {self.accelerometer}")
-        #print(f"  Gyroscope: {self.gyroscope}")
-        print(f"  Battery Level: {self.battery_level}%                    ")
-        print(f"  Connected: {self.is_connected}                    ")
-        #print(f"  Datas received: " + str(datas.hex()))
-
     def setMacAddress(self, mac_address):
         self.mac_address = mac_address
 
@@ -102,27 +111,30 @@ class JoyConRight:
         else:
             print(f"[Alert] {msg}")
 
+# Return stick values from 0 and 32768
 def joystick_decoder(data, orientation):
     if len(data) != 3:
-        print("Invalid joystick data length")
-        return 0, 0
-    # Decode the joystick data
-    x = ((data[1] & 0x0F) << 8) | data[0]
-    y = ((data[2] << 4)) | ((data[1] & 0xF0) >> 4)
+        return 4096 * 4, 4096 * 4
+    
+    X_STICK_MIN = 780
+    X_STICK_MAX = 3260
+    Y_STICK_MIN = 820
+    Y_STICK_MAX = 3250
 
-    # Normalize the values to the range of -1.0 to 1.0
-    x = max(-1.0, min(1.0, (x - 2048) / 2048.0 * 1.7))
-    y = max(-1.0, min(1.0, (y - 2048) / 2048.0 * 1.7))
+    # Decode the joystick data, max values are
+    x_raw = ((data[1] & 0x0F) << 8) | data[0]
+    y_raw = (data[2] << 4) | ((data[1] & 0xF0) >> 4)
 
-    # Scale the values to the range of -32768 to 32767
-    x = int(x * 32767)
-    y = int(y * 32767)
+    x = max(0, min((x_raw - X_STICK_MIN) / (X_STICK_MAX - X_STICK_MIN), 1))
+    y = 1 - max(0, min((y_raw - Y_STICK_MIN) / (Y_STICK_MAX - Y_STICK_MIN), 1))
 
-    if orientation == 1:
-        # Invert the X and Y values for horizontal orientation
-        old_x = x
-        old_y = y
-        x = old_y
-        y = -old_x
+    x = int(x * 32768)
+    y = int(y * 32768)
+
+    if orientation == 1:  # Horizontal orientation
+        # Swap X and Y for horizontal orientation
+        x, y = y, x
+        # Invert Y axis for horizontal orientation
+        x = 32768 - x
 
     return x, y

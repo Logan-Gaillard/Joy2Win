@@ -1,18 +1,18 @@
-import asyncio, os, configparser
+import asyncio, os
 from bleak import BleakClient, BleakScanner
+from config import Config
+from controller_command import ControllerCommand, UUID_NOTIFY, UUID_CMD_RESPONSE, COMMAND_TYPE
+
+if(os.name != 'nt'):
+    print("This application is only supported on Windows.")
+    exit(1)
+
+config = Config().getConfig()
 
 # Constants
 manufact = {
     "id": 0x0553,  # Nintendo Co., Ltd. (https://www.bluetooth.com/specifications/assigned-numbers/company-identifiers/)
     "data-prefix": bytes([0x01, 0x00, 0x03, 0x7e, 0x05])  # Manufacturer data prefix for Joy-Con (I hope this prefix is correct, and it same for everyone)
-}
-UUID_NOTIFY = "ab7de9be-89fe-49ad-828f-118f09df7fd2"
-UUID_CMD = "649d4ac9-8eb7-4e6c-af44-1ea54fe5f005"
-
-#Config variables (by default)
-config = {
-    "type": 0,  # 0 = Both JoyCons, 1 = Joycon Left, 2 = Joycon Right
-    "orientation": 0  # 0 = Vertical, 1 = Horizontal
 }
 
 clients = []  # List to hold connected clients
@@ -55,20 +55,6 @@ async def connect(device_controller):
     except Exception as e:
         print(f"Failed to connect to {device_controller}: {e}")
         return None
-    
-
-def load_config():
-    global config
-    config_parser = configparser.ConfigParser()
-    config_parser.read("config.ini")
-
-    if "Controller" in config_parser:
-        if "type" in config_parser["Controller"]:
-            config["type"] = int(config_parser["Controller"]["type"])
-        if "orientation" in config_parser["Controller"]:
-            config["orientation"] = int(config_parser["Controller"]["orientation"])
-    else:
-        print("No 'Controller' section found in config.ini. Using default values.")
 
 
 async def init_controller(name, side, orientation, type=0):
@@ -97,28 +83,79 @@ async def init_controller(name, side, orientation, type=0):
     else:
         print(f"Joy-Con {name} {side} not found.")
 
+async def handle_duo_joycons(client, side):
+    from control_type.duo_joycon import notify_duo_joycons
+
+    async def notification_handler(sender, data):
+        asyncio.create_task(notify_duo_joycons(client, side, data))
+
+    def response_handler(sender, data):
+        ControllerCommand().receive_response(client, data)
+
+    await client.start_notify(UUID_CMD_RESPONSE, response_handler)
+
+    await initSendControllerCmd(client, "Joy-Con")
+
+    await client.stop_notify(UUID_CMD_RESPONSE)
+
+    await client.start_notify(UUID_NOTIFY, notification_handler)
+
+async def handle_single_joycon(client, side, orientation):
+    from control_type.single_joycon import notify_single_joycons
+
+    async def notification_handler(sender, data):
+        asyncio.create_task(notify_single_joycons(client, side, orientation, data))
+
+    def response_handler(sender, data):
+        ControllerCommand().receive_response(client, data)
+
+    await client.start_notify(UUID_CMD_RESPONSE, response_handler)
+
+    await initSendControllerCmd(client, "Joy-Con")
+
+    await client.stop_notify(UUID_CMD_RESPONSE)
+
+    await client.start_notify(UUID_NOTIFY, notification_handler)
+
+"""
+
+"""
+async def initSendControllerCmd(client, controllerName):
+    controllerCommand = ControllerCommand()
+    if(controllerName == "Joy-Con"):
+        await controllerCommand.send_command(client, "JOY2_CONNECTED_VIBRATION")
+        # Convert binary string (e.g., "0101") to hexadecimal string (e.g., "5")
+
+        if len(config['led_player']) != 4 or not all(c in '01' for c in config['led_player']): #Length is 4 and only contains '0' and '1'
+            print("LED player incorrectly set in config.ini, defaulting to 0001.")
+            config['led_player'] = "0001"
+
+        await controllerCommand.send_command(client, "JOY2_SET_PLAYER_LED", {"led_player": format(int(config['led_player'], 2), 'x')}) # Convert binary string to hex string
+        await controllerCommand.send_command(client, "JOY2_INIT_SENSOR_DATA")
+        await controllerCommand.send_command(client, "JOY2_START_SENSOR_DATA")
+
+    
+
+
 async def main():
     try:
-        os.system("cls" if os.name == "nt" else "clear")
-        load_config()
-
-        if(not config["orientation"] == 0 and not config["orientation"] == 1):
+        if(not config['orientation'] == 0 and not config['orientation'] == 1):
             print("Invalid orientation in config.ini. Please set 'orientation' to 0 (Vertical) or 1 (Horizontal).\nDefaulting to vertical.")
-            config["orientation"] = 0  # Default to vertical if invalid
+            config['orientation'] = 0  # Default to vertical if invalid
 
 
-        if config["type"] == 0:
-            await init_controller("Joy-Con", "Left", config["orientation"], 0)
-            await init_controller("Joy-Con", "Right", config["orientation"], 0)
-        elif config["type"] == 1:
-            await init_controller("Joy-Con", "Left", config["orientation"], 1)
-        elif config["type"] == 2:
-            await init_controller("Joy-Con", "Right", config["orientation"], 2)
+        if config['type'] == 0:
+            await init_controller("Joy-Con", "Left", config['orientation'], 0)
+            await init_controller("Joy-Con", "Right", config['orientation'], 0)
+        elif config['type'] == 1:
+            await init_controller("Joy-Con", "Left", config['orientation'], 1)
+        elif config['type'] == 2:
+            await init_controller("Joy-Con", "Right", config['orientation'], 2)
         else:
             print("Invalid controller type in config.ini. Please set 'type' to 0, 1, or 2.\nDefaulting to both Joy-Cons.")
-            await init_controller("Joy-Con", "Left", config["orientation"], 0)
-            await init_controller("Joy-Con", "Right", config["orientation"], 0)
-        
+            await init_controller("Joy-Con", "Left", config['orientation'], 0)
+            await init_controller("Joy-Con", "Right", config['orientation'], 0)
+
         while True:
             await asyncio.sleep(1)
 
@@ -128,43 +165,8 @@ async def main():
     finally:
         print("Disconnecting controllers...")
         for client in clients:
-            if client.is_connected:
-                await client.disconnect()
+            await client.disconnect()
         print("All controllers disconnected.")
-
-
-
-async def handle_duo_joycons(client, side):
-    from handles.duo_joycon import notify_duo_joycons
-    data = bytes.fromhex('09910007000800000100000000000000') # Found in : https://github.com/darthcloud/BlueRetro/
-    await client.write_gatt_char(UUID_CMD, data)
-
-    await asyncio.sleep(0.1)  # Emulate waiting for a response
-
-    data = bytes.fromhex('0A9101020004000003000000')
-    await client.write_gatt_char(UUID_CMD, data)
-
-    def notification_handler(sender, data):
-        notify_duo_joycons(client, side, data)
-
-    await client.start_notify(UUID_NOTIFY, notification_handler)
-
-async def handle_single_joycon(client, side, orientation):
-    from handles.single_joycon import notify_duo_joycons
-    data = bytes.fromhex('09910007000800000100000000000000') # Found in : https://github.com/darthcloud/BlueRetro/
-    await client.write_gatt_char(UUID_CMD, data)
-
-    await asyncio.sleep(0.1)  # Emulate waiting for a response
-
-    data = bytes.fromhex('0A9101020004000003000000')
-    await client.write_gatt_char(UUID_CMD, data)
-
-    def notification_handler(sender, data):
-        notify_duo_joycons(client, side, orientation, data)
-
-    await client.start_notify(UUID_NOTIFY, notification_handler)
-
-
 
 
 #Used to get the manufacturer data from joycons
