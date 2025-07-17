@@ -1,9 +1,14 @@
 from controllers.JoyconL import JoyConLeft
 from controllers.JoyconR import JoyConRight
+from dsu_server import controller_update
+from config import Config
+
 import pyvjoy
 
 joyconLeft = JoyConLeft()
 joyconRight = JoyConRight()
+
+config = Config().getConfig()
 
 vjoy = pyvjoy.VJoyDevice(1)  # vJoy ID 1
 
@@ -37,7 +42,7 @@ Controls = {
     }
 }
 
-async def update_vjoy(side):
+async def update(side):
     for side in ["Left", "Right"]:
         for btnName, btnValue in Controls[side].items():
             pressed = (joyconLeft.buttons.get(btnName, False) if side == "Left" else joyconRight.buttons.get(btnName, False))
@@ -48,6 +53,9 @@ async def update_vjoy(side):
     vjoy.set_axis(pyvjoy.HID_USAGE_RX, joyconRight.analog_stick["X"])
     vjoy.set_axis(pyvjoy.HID_USAGE_RY, joyconRight.analog_stick["Y"])
 
+    if side == "Right" and config["enable_dsu"] == True:
+        await controller_update(joyconRight.motionTimestamp, joyconRight.accelerometer, joyconRight.gyroscope)
+
 
 async def notify_duo_joycons(client, side, data):
     if side == "Left":
@@ -57,6 +65,6 @@ async def notify_duo_joycons(client, side, data):
     else:
         print("Unknown controller side.")
 
-    await update_vjoy(side)
+    await update(side)
     
     return client

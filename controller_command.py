@@ -10,11 +10,11 @@ COMMAND_TYPE = {
 
     "JOY2_SET_PLAYER_LED": {"data": "09910007000800000X00000000000000", "wait_response": True, "args": [{"name": "led_player", "letter": "X", "length": 1}]},
 
-    "JOY2_INIT_SENSOR_DATA": {"data": "0c9101020004000037000000", "wait_response": True, "args": None}, #Thanks to "Narr the Reg" and "ndeadly"
+    "JOY2_INIT_SENSOR_DATA": {"data": "0c91010200040000FF000000", "wait_response": True, "args": None}, #Thanks to "Narr the Reg" and "ndeadly"
 
-    "JOY2_FINALIZE_SENSOR_DATA": {"data": "0c9101030004000037000000", "wait_response": True, "args": None}, #Thanks to "Narr the Reg" and "ndeadly"
+    "JOY2_FINALIZE_SENSOR_DATA": {"data": "0c91010300040000FF000000", "wait_response": True, "args": None}, #Thanks to "Narr the Reg" and "ndeadly"
 
-    "JOY2_START_SENSOR_DATA": {"data": "0c9101040004000037000000", "wait_response": True, "args": None}, #Thanks to "Narr the Reg" and "ndeadly"
+    "JOY2_START_SENSOR_DATA": {"data": "0c91010400040000FF000000", "wait_response": True, "args": None}, #Thanks to "Narr the Reg" and "ndeadly"
 }
 
 class ControllerCommand:

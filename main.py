@@ -1,15 +1,17 @@
 import asyncio, os
 from bleak import BleakClient, BleakScanner
 from config import Config
-from controller_command import ControllerCommand, UUID_NOTIFY, UUID_CMD_RESPONSE, COMMAND_TYPE
+from controller_command import ControllerCommand, UUID_NOTIFY, UUID_CMD_RESPONSE
+from dsu_server import main_dsu
 
+# Check if the operating system is Windows
 if(os.name != 'nt'):
     print("This application is only supported on Windows.")
     exit(1)
 
+# Read the configuration from config.ini
 config = Config().getConfig()
 
-# Constants
 manufact = {
     "id": 0x0553,  # Nintendo Co., Ltd. (https://www.bluetooth.com/specifications/assigned-numbers/company-identifiers/)
     "data-prefix": bytes([0x01, 0x00, 0x03, 0x7e, 0x05])  # Manufacturer data prefix for Joy-Con (I hope this prefix is correct, and it same for everyone)
@@ -17,6 +19,7 @@ manufact = {
 
 clients = []  # List to hold connected clients
 
+# Function to scan for controllers
 async def scan_joycons():
     device_controller = None
 
@@ -86,18 +89,15 @@ async def init_controller(name, side, orientation, type=0):
 async def handle_duo_joycons(client, side):
     from control_type.duo_joycon import notify_duo_joycons
 
-    async def notification_handler(sender, data):
+    async def notification_handler(sender, data): #Notification des données du controller
         asyncio.create_task(notify_duo_joycons(client, side, data))
 
-    def response_handler(sender, data):
+    def response_handler(sender, data): #Notification des réponses aux commandes du controller
         ControllerCommand().receive_response(client, data)
 
     await client.start_notify(UUID_CMD_RESPONSE, response_handler)
-
     await initSendControllerCmd(client, "Joy-Con")
-
     await client.stop_notify(UUID_CMD_RESPONSE)
-
     await client.start_notify(UUID_NOTIFY, notification_handler)
 
 async def handle_single_joycon(client, side, orientation):
@@ -110,16 +110,11 @@ async def handle_single_joycon(client, side, orientation):
         ControllerCommand().receive_response(client, data)
 
     await client.start_notify(UUID_CMD_RESPONSE, response_handler)
-
     await initSendControllerCmd(client, "Joy-Con")
-
     await client.stop_notify(UUID_CMD_RESPONSE)
-
     await client.start_notify(UUID_NOTIFY, notification_handler)
 
-"""
 
-"""
 async def initSendControllerCmd(client, controllerName):
     controllerCommand = ControllerCommand()
     if(controllerName == "Joy-Con"):
@@ -134,15 +129,12 @@ async def initSendControllerCmd(client, controllerName):
         await controllerCommand.send_command(client, "JOY2_INIT_SENSOR_DATA")
         await controllerCommand.send_command(client, "JOY2_START_SENSOR_DATA")
 
-    
-
 
 async def main():
     try:
         if(not config['orientation'] == 0 and not config['orientation'] == 1):
             print("Invalid orientation in config.ini. Please set 'orientation' to 0 (Vertical) or 1 (Horizontal).\nDefaulting to vertical.")
             config['orientation'] = 0  # Default to vertical if invalid
-
 
         if config['type'] == 0:
             await init_controller("Joy-Con", "Left", config['orientation'], 0)
@@ -155,6 +147,9 @@ async def main():
             print("Invalid controller type in config.ini. Please set 'type' to 0, 1, or 2.\nDefaulting to both Joy-Cons.")
             await init_controller("Joy-Con", "Left", config['orientation'], 0)
             await init_controller("Joy-Con", "Right", config['orientation'], 0)
+
+        if config['enable_dsu'] == True :
+            main_dsu()
 
         while True:
             await asyncio.sleep(1)

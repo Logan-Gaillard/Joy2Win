@@ -1,5 +1,6 @@
 from controllers.JoyconL import JoyConLeft
 from controllers.JoyconR import JoyConRight
+from dsu_server import controller_update
 import pyvjoy
 
 joyconLeft = JoyConLeft()
@@ -68,7 +69,7 @@ Controls = {
     }
 }
 
-async def update_vjoy(side, orientation):
+async def update(side, orientation):
     for btnName, btnValue in Controls[side][str(orientation)].items():
         if side == "Left":
             pressed = joyconLeft.buttons.get(btnName, False)
@@ -80,11 +81,14 @@ async def update_vjoy(side, orientation):
             #Joystick control
             vjoy.set_axis(pyvjoy.HID_USAGE_X, joyconLeft.analog_stick["X"])
             vjoy.set_axis(pyvjoy.HID_USAGE_Y, joyconLeft.analog_stick["Y"])
+            await controller_update(joyconLeft.motionTimestamp, joyconLeft.accelerometer, joyconLeft.gyroscope)
+
             
         elif(side == "Right"):
             #print(f"Joysticks {joyconRight.analog_stick}")
             vjoy.set_axis(pyvjoy.HID_USAGE_X, joyconRight.analog_stick["X"])
             vjoy.set_axis(pyvjoy.HID_USAGE_Y, joyconRight.analog_stick["Y"])
+            await controller_update(joyconRight.motionTimestamp, joyconRight.accelerometer, joyconRight.gyroscope)
 
 async def notify_single_joycons(client, side, orientation, data):
     #print(f"Joy-Con data : {data.hex()}")
@@ -101,6 +105,6 @@ async def notify_single_joycons(client, side, orientation, data):
     else:
         print("Unknown controller side.")
 
-    await update_vjoy(side, orientation)
+    await update(side, orientation)
 
     return client

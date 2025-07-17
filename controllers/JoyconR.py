@@ -33,19 +33,21 @@ class JoyConRight:
         }
 
         # I hope i can implement this later with HID
-        #self.accelerometer = {
-        #    "X": 0.0,
-        #    "Y": 0.0,
-        #    "Z": 0.0
-        #}
+        self.accelerometer = {
+            "X": 0.0,
+            "Y": 0.0,
+            "Z": 0.0,
+        }
 
         # I hope i can implement this later with HID
-        #self.gyroscope = {
-        #    "X": 0.0,
-        #    "Y": 0.0,
-        #    "Z": 0.0
-        #}
+        self.gyroscope = {
+            "X": 0.0, # Pitch
+            "Y": 0.0, # Roll
+            "Z": 0.0, # Yaw
+        }
 
+        self.timestamp = bytes.fromhex("00000000") 
+        self.motionTimestamp = bytes.fromhex("00000000")  # Placeholder for motion timestamp
         self.battery_level = 100.0
         self.alertSent = False
         self.is_connected = False
@@ -55,24 +57,28 @@ class JoyConRight:
         btnDatas = datas[4] << 8 | datas[5]
         JoystickDatas = datas[13:16]
 
-        gyroX, gyroY, gyroZ = struct.unpack("<3h", bytes(datas[0x30:0x36]))
+        self.timestamp = bytes.fromhex(datas[0:4].hex())
 
-        motionsensorDatas = {
-            "timestamp": (datas[0x2A + 0x03] << 24) | (datas[0x2A + 0x02] << 16) | (datas[0x2A + 0x01] << 8) | datas[0x2A],
-            "temperature": (datas[0x2E + 0x01] << 8) | datas[0x2E],
-            #"GyroX": (datas[0x30 + 0x01] << 8) | datas[0x30],
-            "GyroX": gyroX,
-            "?": (datas[0x32 + 0x01] << 8) | datas[0x32],
-            "??": (datas[0x34 + 0x01] << 8) | datas[0x34],
-            "???": (datas[0x36 + 0x01] << 8) | datas[0x36],
-            "????": (datas[0x38 + 0x01] << 8) | datas[0x38],
-            "?????": (datas[0x3A + 0x01] << 8) | datas[0x3A],
-        }
+        self.motionTimestamp = struct.unpack("<i", datas[0x2A:0x2E])[0]
 
-        #print(f"motionsensorDatas: {datas[0x2A:0x3B].hex()}", end=" ")
-        #print(f"timestamp: {motionsensorDatas['timestamp']} soit {motionsensorDatas['timestamp'] / 45000:.1f} s", end=" ")
-        #print(f"temperature: {motionsensorDatas['temperature']} soit {25 + motionsensorDatas['temperature'] / 127:.2f} °C", end=" ")
-        #print(f"GyroX: {motionsensorDatas['GyroX']} (bin: {motionsensorDatas['GyroX']:016b}) (hex: {motionsensorDatas['GyroX']:04x}) = ")
+        accel_x_raw, accel_y_raw, accel_z_raw = struct.unpack("<3h", datas[0x30:0x36])
+        gyro_x_raw, gyro_y_raw, gyro_z_raw = struct.unpack("<3h", datas[0x36:0x3C])
+
+        accel_factor = 1 / 4096  # 1G = 4096
+        gyro_factor = 360 / 48000  # 360° = 48000
+
+        self.accelerometer["X"] = accel_x_raw * accel_factor
+        self.accelerometer["Y"] = accel_y_raw * accel_factor
+        self.accelerometer["Z"] = accel_z_raw * accel_factor
+
+        self.gyroscope["X"] = gyro_x_raw * gyro_factor
+        self.gyroscope["Y"] = gyro_y_raw * gyro_factor
+        self.gyroscope["Z"] = gyro_z_raw * gyro_factor
+
+        #print(f"X of 360°: {self.gyroscope['X']:2f} : {(self.gyroscope['X'] * 360 / 48000):2f}, Y of 360°: {self.gyroscope['Y']:2f} : {self.gyroscope['Y'] * 360 / 48000:2f}, Z of 360°: {self.gyroscope['Z']:2f} : {self.gyroscope['Z'] * 360 / 48000:2f}")
+
+
+        #print(f"Timestamp: {self.timestamp.hex()}, Accel: ({self.accelerometer['X']}, {self.accelerometer['Y']}, {self.accelerometer['Z']}), Gyro: ({self.gyroscope['X']}, {self.gyroscope['Y']}, {self.gyroscope['Z']})")
 
         self.buttons["ZR"] = bool(btnDatas & 0x8000)
         self.buttons["R"] = bool(btnDatas & 0x4000)
@@ -90,7 +96,8 @@ class JoyConRight:
         self.analog_stick["X"], self.analog_stick["Y"] = joystick_decoder(JoystickDatas, self.orientation)
 
         # Update battery level only if the new value is lower than the current one
-        self.battery_level = round(datas[31] / 255.0 * 100, 1)
+        battery_raw = (datas[31]) | (datas[32] << 8)
+        self.battery_level = round(battery_raw * 100 / 4095)
 
         if(self.battery_level < 10.0 and self.is_connected and not self.alertSent):
             self.notify_low_battery()
