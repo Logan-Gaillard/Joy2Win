@@ -63,15 +63,15 @@ class JoyConLeft:
         gyro_x_raw, gyro_y_raw, gyro_z_raw = struct.unpack("<3h", datas[0x36:0x3C])
 
         accel_factor = 1 / 4096  # 1G = 4096
-        gyro_factor = 360 / 48000  # 360° = 48000
+        gyro_factor = 360 / 6048  # 360° = 6048
 
-        self.accelerometer["X"] = accel_x_raw * accel_factor
-        self.accelerometer["Y"] = accel_y_raw * accel_factor
-        self.accelerometer["Z"] = accel_z_raw * accel_factor
+        self.accelerometer["X"] = -accel_x_raw * accel_factor
+        self.accelerometer["Y"] = -accel_z_raw * accel_factor
+        self.accelerometer["Z"] = accel_y_raw * accel_factor
 
         self.gyroscope["X"] = gyro_x_raw * gyro_factor
-        self.gyroscope["Y"] = gyro_y_raw * gyro_factor
-        self.gyroscope["Z"] = gyro_z_raw * gyro_factor
+        self.gyroscope["Y"] = -gyro_z_raw * gyro_factor
+        self.gyroscope["Z"] = gyro_y_raw * gyro_factor
 
         #print(f"Timestamp: {self.timestamp.hex()}, Accel: ({self.accelerometer['X']}, {self.accelerometer['Y']}, {self.accelerometer['Z']}), Gyro: ({self.gyroscope['X']}, {self.gyroscope['Y']}, {self.gyroscope['Z']})")
 

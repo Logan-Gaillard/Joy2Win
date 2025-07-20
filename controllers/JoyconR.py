@@ -41,8 +41,8 @@ class JoyConRight:
 
         # I hope i can implement this later with HID
         self.gyroscope = {
-            "X": 0.0, # Pitch
-            "Y": 0.0, # Roll
+            "X": 0.0, # Roll
+            "Y": 0.0, # Pitch
             "Z": 0.0, # Yaw
         }
 
@@ -65,15 +65,15 @@ class JoyConRight:
         gyro_x_raw, gyro_y_raw, gyro_z_raw = struct.unpack("<3h", datas[0x36:0x3C])
 
         accel_factor = 1 / 4096  # 1G = 4096
-        gyro_factor = 360 / 48000  # 360° = 48000
+        gyro_factor = 360 / 6048  # 360° = 6048
 
-        self.accelerometer["X"] = accel_x_raw * accel_factor
-        self.accelerometer["Y"] = accel_y_raw * accel_factor
-        self.accelerometer["Z"] = accel_z_raw * accel_factor
+        self.accelerometer["X"] = -accel_x_raw * accel_factor
+        self.accelerometer["Y"] = -accel_z_raw * accel_factor
+        self.accelerometer["Z"] = accel_y_raw * accel_factor
 
         self.gyroscope["X"] = gyro_x_raw * gyro_factor
-        self.gyroscope["Y"] = gyro_y_raw * gyro_factor
-        self.gyroscope["Z"] = gyro_z_raw * gyro_factor
+        self.gyroscope["Y"] = -gyro_z_raw * gyro_factor
+        self.gyroscope["Z"] = gyro_y_raw * gyro_factor
 
         #print(f"X of 360°: {self.gyroscope['X']:2f} : {(self.gyroscope['X'] * 360 / 48000):2f}, Y of 360°: {self.gyroscope['Y']:2f} : {self.gyroscope['Y'] * 360 / 48000:2f}, Z of 360°: {self.gyroscope['Z']:2f} : {self.gyroscope['Z'] * 360 / 48000:2f}")
 
