@@ -26,6 +26,7 @@ class JoyConRight:
             "Home": False,
             "GameChat": False,
         }
+
         self.analog_stick = {
             #these values is mapped to Upright usage (it need to invert the mapping for a sideways usage)
             "X": 0,
@@ -46,6 +47,19 @@ class JoyConRight:
             "Z": 0.0, # Yaw
         }
 
+        self.mouse = {
+            "X": 0.0,
+            "Y": 0.0,
+            "distance": "0C"
+        }
+
+        self.mouseBtn = {
+            "Left": False,
+            "Right": False,
+            "scrollX": 0.0,
+            "scrollY": 0.0,
+        }
+
         self.timestamp = bytes.fromhex("00000000") 
         self.motionTimestamp = bytes.fromhex("00000000")  # Placeholder for motion timestamp
         self.battery_level = 100.0
@@ -56,6 +70,12 @@ class JoyConRight:
         # Update button states based on the received data
         btnDatas = datas[4] << 8 | datas[5]
         JoystickDatas = datas[13:16]
+        mouseDatas = datas[16:24]
+
+        self.mouse["X"], self.mouse["Y"] = struct.unpack("<hh", mouseDatas[:4])
+        self.mouse["distance"] = mouseDatas[7:8].hex()
+
+        #print(f"JoyCon Right Datas: {mouseDatas.hex()}, Mouse X: {self.mouse['X']}, Mouse Y: {self.mouse['Y']}, Mouse Distance: {self.mouse['distance']}")
 
         self.timestamp = bytes.fromhex(datas[0:4].hex())
 
@@ -94,6 +114,12 @@ class JoyConRight:
         self.buttons["GameChat"] = bool(btnDatas & 0x0040)
 
         self.analog_stick["X"], self.analog_stick["Y"] = joystick_decoder(JoystickDatas, self.orientation)
+
+        self.mouseBtn["Left"] = bool(btnDatas & 0x4000) #R
+        self.mouseBtn["Right"] = bool(btnDatas & 0x8000) #ZR
+        self.mouseBtn["scrollX"], self.mouseBtn["scrollY"] = scroll_decoder(JoystickDatas)
+
+        #print(f"{self.mouseBtn['scrollX']}, {self.mouseBtn['scrollY']}")
 
         # Update battery level only if the new value is lower than the current one
         battery_raw = (datas[31]) | (datas[32] << 8)
@@ -143,5 +169,35 @@ def joystick_decoder(data, orientation):
         x, y = y, x
         # Invert Y axis for horizontal orientation
         x = 32768 - x
+
+    return x, y
+
+def scroll_decoder(data):
+    if len(data) != 3:
+        return 0, 0
+
+    X_STICK_MIN = 780
+    X_STICK_MAX = 3260
+    Y_STICK_MIN = 820
+    Y_STICK_MAX = 3250
+
+    x_raw = ((data[1] & 0x0F) << 8) | data[0]
+    y_raw = (data[2] << 4) | ((data[1] & 0xF0) >> 4)
+
+    # Centrer autour de zéro
+    x_center = (X_STICK_MAX + X_STICK_MIN) / 2
+    y_center = (Y_STICK_MAX + Y_STICK_MIN) / 2
+
+    x = x_raw - x_center
+    y = y_raw - y_center
+
+    # Normaliser pour obtenir une plage [-32768, 32767]
+    x = int(max(-1, min(x / ((X_STICK_MAX - X_STICK_MIN) / 2), 1)) * 32767)
+    y = int(max(-1, min(y / ((Y_STICK_MAX - Y_STICK_MIN) / 2), 1)) * 32767)
+
+    if x > -3000 and x < 3000:
+        x = 0
+    if y > -3000 and y < 3000:
+        y = 0
 
     return x, y

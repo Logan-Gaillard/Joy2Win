@@ -60,7 +60,7 @@ async def connect(device_controller):
         return None
 
 
-async def init_controller(name, side, orientation, type=0):
+async def init_controller(name, side, orientation, controller=0):
     print(f"Scanning for {name} {side}, press the sync button...")
     device = await scan_joycons()
 
@@ -71,14 +71,14 @@ async def init_controller(name, side, orientation, type=0):
 
             print(f"{name} {side} connected successfully.")
 
-            if type == 0:
+            if controller == 0:
                 # Notify controller to handle both Joy-Cons, because the controller is connected
                 await handle_duo_joycons(client, side)
 
-            elif type == 1:
+            elif controller == 1:
                 await handle_single_joycon(client, side, orientation)
 
-            elif type == 2:
+            elif controller == 2:
                 await handle_single_joycon(client, side, orientation)
 
         else:
@@ -136,15 +136,15 @@ async def main():
             print("Invalid orientation in config.ini. Please set 'orientation' to 0 (Vertical) or 1 (Horizontal).\nDefaulting to vertical.")
             config['orientation'] = 0  # Default to vertical if invalid
 
-        if config['type'] == 0:
+        if config['controller'] == 0:
             await init_controller("Joy-Con", "Left", config['orientation'], 0)
             await init_controller("Joy-Con", "Right", config['orientation'], 0)
-        elif config['type'] == 1:
+        elif config['controller'] == 1:
             await init_controller("Joy-Con", "Left", config['orientation'], 1)
-        elif config['type'] == 2:
+        elif config['controller'] == 2:
             await init_controller("Joy-Con", "Right", config['orientation'], 2)
         else:
-            print("Invalid controller type in config.ini. Please set 'type' to 0, 1, or 2.\nDefaulting to both Joy-Cons.")
+            print("Invalid controller in config.ini. Please set 'controller' to 0, 1, or 2.\nDefaulting to both Joy-Cons.")
             await init_controller("Joy-Con", "Left", config['orientation'], 0)
             await init_controller("Joy-Con", "Right", config['orientation'], 0)
 

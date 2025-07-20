@@ -14,7 +14,7 @@ This temporary project allows you to connect your **Nintendo Switch 2 Joy-Con** 
 
 2. Install Python dependencies :
     ```
-    pip install bleak pyvjoy
+    pip install bleak pyvjoy pynput
     ```
 
 4.  Install vJoy :

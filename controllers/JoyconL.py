@@ -43,6 +43,19 @@ class JoyConLeft:
             "Z": 0.0, # Yaw
         }
 
+        self.mouse = {
+            "X": 0.0,
+            "Y": 0.0,
+            "distance": "0C"
+        }
+
+        self.mouseBtn = {
+            "Left": False,
+            "Right": False,
+            "scrollX": 0.0,
+            "scrollY": 0.0,
+        }
+
         self.timestamp = bytes.fromhex("00000000") 
         self.motionTimestamp = bytes.fromhex("00000000")
         self.battery_level = 100.0
@@ -53,7 +66,10 @@ class JoyConLeft:
         # Update button states based on the received data
         btnDatas = datas[5] << 8 | datas[6]
         JoystickDatas = datas[10:13]
+        mouseDatas = datas[16:24]
 
+        self.mouse["X"], self.mouse["Y"] = struct.unpack("<hh", mouseDatas[:4])
+        self.mouse["distance"] = mouseDatas[7:8].hex()
 
         self.timestamp = bytes.fromhex(datas[0:4].hex())
 
@@ -88,6 +104,10 @@ class JoyConLeft:
         self.buttons["Capture"] = bool(btnDatas & 0x2000)
 
         self.analog_stick["X"], self.analog_stick["Y"] = joystick_decoder(JoystickDatas, self.orientation)
+
+        self.mouseBtn["Left"] = bool(btnDatas & 0x0040) #L
+        self.mouseBtn["Right"] = bool(btnDatas & 0x0080) #ZL
+        self.mouseBtn["scrollX"], self.mouseBtn["scrollY"] = scroll_decoder(JoystickDatas)
 
         # Update battery level only if the new value is lower than the current one
         battery_raw = (datas[31]) | (datas[32] << 8)
@@ -146,5 +166,35 @@ def joystick_decoder(data, orientation):
     if orientation == 1:  # Horizontal orientation
         # Swap X and Y for horizontal orientation
         x, y = y, x
+
+    return x, y
+
+def scroll_decoder(data):
+    if len(data) != 3:
+        return 0, 0
+
+    X_STICK_MIN = 780
+    X_STICK_MAX = 3260
+    Y_STICK_MIN = 820
+    Y_STICK_MAX = 3250
+
+    x_raw = ((data[1] & 0x0F) << 8) | data[0]
+    y_raw = (data[2] << 4) | ((data[1] & 0xF0) >> 4)
+
+    # Centrer autour de zéro
+    x_center = (X_STICK_MAX + X_STICK_MIN) / 2
+    y_center = (Y_STICK_MAX + Y_STICK_MIN) / 2
+
+    x = x_raw - x_center
+    y = y_raw - y_center
+
+    # Normaliser pour obtenir une plage [-32768, 32767]
+    x = int(max(-1, min(x / ((X_STICK_MAX - X_STICK_MIN) / 2), 1)) * 32767)
+    y = int(max(-1, min(y / ((Y_STICK_MAX - Y_STICK_MIN) / 2), 1)) * 32767)
+
+    if x > -3000 and x < 3000:
+        x = 0
+    if y > -3000 and y < 3000:
+        y = 0
 
     return x, y
