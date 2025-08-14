@@ -95,11 +95,14 @@ async def handle_duo_joycons(client, side):
     def response_handler(sender, data): #Notification des réponses aux commandes du controller
         ControllerCommand().receive_response(client, data)
 
-    await client.start_notify(UUID_CMD_RESPONSE, response_handler)
-    await initSendControllerCmd(client, "Joy-Con")
-    await client.stop_notify(UUID_CMD_RESPONSE)
-    await client.start_notify(UUID_NOTIFY, notification_handler)
+    await client.start_notify(UUID_CMD_RESPONSE, response_handler) #Commencer à écouter les réponses aux commandes
 
+    await initSendControllerCmd(client, "Joy-Con") #Envoie des commandes d'initialisation au controller
+
+    await client.stop_notify(UUID_CMD_RESPONSE) # Nous avons plus besoin d'écouter les réponses aux commandes
+    await client.start_notify(UUID_NOTIFY, notification_handler) # Commencer à écouter les notifications des données du controller
+
+# Se référé aux commentaire qui sont dans la fonction au dessus (handle_duo_joycons)
 async def handle_single_joycon(client, side, orientation):
     from control_type.single_joycon import notify_single_joycons
 
@@ -110,7 +113,9 @@ async def handle_single_joycon(client, side, orientation):
         ControllerCommand().receive_response(client, data)
 
     await client.start_notify(UUID_CMD_RESPONSE, response_handler)
+
     await initSendControllerCmd(client, "Joy-Con")
+
     await client.stop_notify(UUID_CMD_RESPONSE)
     await client.start_notify(UUID_NOTIFY, notification_handler)
 
@@ -118,6 +123,21 @@ async def handle_single_joycon(client, side, orientation):
 async def initSendControllerCmd(client, controllerName):
     controllerCommand = ControllerCommand()
     if(controllerName == "Joy-Con"):
+        
+        if(config['save_mac_address'] == True):
+            mac_address = config['mac_address']
+
+            mac_addr1 = mac_address
+            mac_addr2 = (mac_address[0] - 1).to_bytes(1, 'big') + mac_address[1:]
+
+            await controllerCommand.send_command(client, "JOY2_SAVE_MC_ADDR_STEP1", {"mac-addr1": mac_addr1.hex(), "mac-addr2": mac_addr2.hex()})
+            await controllerCommand.send_command(client, "JOY2_SAVE_MC_ADDR_STEP2")
+            await controllerCommand.send_command(client, "JOY2_SAVE_MC_ADDR_STEP3")
+            await controllerCommand.send_command(client, "JOY2_SAVE_MC_ADDR_STEP4")
+
+            print(f"MAC address {mac_addr1.hex()} + {mac_addr2.hex()} saved successfully.")
+
+
         await controllerCommand.send_command(client, "JOY2_CONNECTED_VIBRATION")
         # Convert binary string (e.g., "0101") to hexadecimal string (e.g., "5")
 

@@ -1,5 +1,4 @@
 import asyncio
-from bleak import BleakClient
 
 UUID_NOTIFY = "ab7de9be-89fe-49ad-828f-118f09df7fd2"
 UUID_CMD = "649d4ac9-8eb7-4e6c-af44-1ea54fe5f005"
@@ -15,6 +14,14 @@ COMMAND_TYPE = {
     "JOY2_FINALIZE_SENSOR_DATA": {"data": "0c91010300040000FF000000", "wait_response": True, "args": None}, #Thanks to "Narr the Reg" and "ndeadly"
 
     "JOY2_START_SENSOR_DATA": {"data": "0c91010400040000FF000000", "wait_response": True, "args": None}, #Thanks to "Narr the Reg" and "ndeadly"
+
+    # Save mac address
+    # Found info : switch2_controller_research by ndeadly
+    "JOY2_SAVE_MC_ADDR_STEP1": {"data": "15910101000e00000002XY", "wait_response": True, "args": [{"name": "mac-addr1", "letter": "X", "length": 12},{"name": "mac-addr2", "letter": "Y", "length": 12}]},
+    "JOY2_SAVE_MC_ADDR_STEP2": {"data": "15910104001100000008065a60e902e4e102029e3fa39a78d1", "wait_response": True, "args": None},
+    "JOY2_SAVE_MC_ADDR_STEP3": {"data": "159101020011000000934e580f163aeecfb575fc9136b22fbb", "wait_response": True, "args": None},
+    "JOY2_SAVE_MC_ADDR_STEP4": {"data": "159101030001000000", "wait_response": True, "args": None},
+
 }
 
 class ControllerCommand:
@@ -55,6 +62,8 @@ class ControllerCommand:
 
             # Convert hex string to bytes
             data_bytes = bytes.fromhex(data)
+
+            print(f"Sending command: {commandType} with data: {data_bytes.hex()}")
 
             await client.write_gatt_char(UUID_CMD, data_bytes)
             
