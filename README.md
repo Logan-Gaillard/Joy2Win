@@ -2,6 +2,10 @@
 
 This temporary project allows you to connect your **Nintendo Switch 2 Joy-Con** to a Windows PC using BLE and vJoy.
 
+Why it's temporary ?
+
+My repo is just a little to
+
 ---
 
 ## 🚀 Installation
@@ -44,6 +48,8 @@ Your Joy-Con 2 will be compatible with your Windows.
 - Select usage type and Joy-Con orientation (single or paired, horizontal or vertical (only for single joycon))
 - Player LED indicator support (By default, player 1)
 - Vibration feedback when Joy-Con is successfully connected.
+- Use motion sensor with DSU server (For emulators)
+- Automatic mouse control
 
 ## Repositories
 - [pyvjoy](https://github.com/tidzo/pyvjoy)
