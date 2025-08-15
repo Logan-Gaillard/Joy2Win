@@ -52,11 +52,17 @@ Your Joy-Con 2 will be compatible with your Windows.
 - [switch2_controller_research](https://github.com/ndeadly/switch2_controller_research)
 
 ## **NOTICE !**
-**Why i said it's a temporary project ?**  
-For the moment, the project work only on Windows but with a low bitrate. The Joy-Con 2 won't to communicate with other device instead Windows (Due to Joy-Con 2 communication protocol ?)    
-On this [Discord's server](https://discord.gg/gegfNZ5Ucz) somes people work really hard to understand how switch 2 controllers works.  
+**Why is this project temporary ?**  
+Currently, Joy-Con 2 controllers only work on Windows. Other operating systems are not supported due to how the controllers communicate. (Due to Joy-Con 2 communication protocol ?)  
   
-When bugs are solved, other projet will be better project than mine, stay tuned.  
+On this [Discord's server](https://discord.gg/gegfNZ5Ucz) somes people work hard to figure out how Switch 2 controllers communicate.  
+
+> [!WARNING]
+> **!! This Discord's server is not part of this project, so no help will be provided there !!**  
+> For questions or issues, please contact ``octokling`` on Discord or by Issues.
+
+> [!NOTE]  
+> I am not a Bluetooth communication expert. I have been helped multiple times to understand how it works. 
 
 
 ## Author
