@@ -41,7 +41,7 @@ This temporary project allows you to connect your **Nintendo Switch 2 Joy-Con** 
         - Search in Windows for "Set up USB game controllers".
         - You should see "vJoy Device" there.
 
-Your Joy-Con 2 are now connected to your Windows computer.
+Your Joy-Con 2 controllers are now connected to your Windows computer.
 
 ## 🎮 (Optional) Next Steps - Steam
 
