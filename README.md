@@ -55,7 +55,7 @@ Your Joy-Con 2 will be compatible with your Windows.
 **Why is this project temporary ?**  
 Currently, Joy-Con 2 controllers only work on Windows. Other operating systems are not supported due to how the controllers communicate. (Due to Joy-Con 2 communication protocol ?)  
   
-On this [Discord's server](https://discord.gg/gegfNZ5Ucz) somes people work hard to figure out how Switch 2 controllers communicate.  
+On this project's [Discord's server](https://discord.gg/gegfNZ5Ucz) somes people work hard to figure out how Switch 2 controllers communicate.  
 
 > [!WARNING]
 > **!! This Discord's server is not part of this project, so no help will be provided there !!**  
