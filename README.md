@@ -22,7 +22,7 @@ This temporary project allows you to connect your **Nintendo Switch 2 Joy-Con** 
 
 5. Configure vJoy :  
         - Open "Configure vJoy"  
-        - Select controller n°1  
+        - Select controller 1  
         - Set 24 buttons or higher  
         - Restart your computer  
 
@@ -30,14 +30,27 @@ This temporary project allows you to connect your **Nintendo Switch 2 Joy-Con** 
 
 1. Copy the `config-exemple.ini` file, rename it to `config.ini`, and edit it according to your needs.
 
-2. Run the script :
+2. Run the script in the Joy2Win directory (wherever you cloned it):
     ```bash
     python main.py
     ```
 
 3. Follow the instructions displayed when the script starts.
 
-Your Joy-Con 2 will be compatible with your Windows.
+4. Confirm that the controller is connected.
+        - Search in Windows for "Set up USB game controllers".
+        - You should see "vJoy Device" there.
+
+Your Joy-Con 2 controllers are now connected to your Windows computer.
+
+## 🎮 (Optional) Next Steps - Steam
+
+To connect your controller for use with Steam games, In Steam, navigate to Settings > Controller > Begin Setup.
+
+Note: There are other options under Settings > Controller that you can enable / explore, like:
+        - Use Nintendo Button Layout
+        - Universal Face Button Glyphs (to match Nintendo's UI)
+        - Test Device Inputs
 
 ## ✨ Features
 
