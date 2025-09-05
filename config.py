@@ -10,6 +10,7 @@ class Config:
         "save_mac_address": False,
         "enable_dsu": False,
         "mouse_mode": 0,
+        "controller_type": 0,
         "mac_address": "FFFFFFFFFFFF"
     }
 
@@ -34,13 +35,14 @@ class Config:
         config_parser.read(self._config_path)
         if "Controller" in config_parser:
             section = config_parser["Controller"]
-            self.controller = int(section.get("controller", self.controller))
-            self.orientation = int(section.get("orientation", self.orientation))
+            self.controller = int(section.get("controller", self.controller if self.controller in [0,1,2] else 0))
+            self.orientation = int(section.get("orientation", self.orientation if self.orientation in [0,1] else 0))
             self.led_player = str(section.get("led_player", self.led_player))
             self.save_mac_address = section.get("save_mac_address", str(self.save_mac_address)).lower() == '1'
             self.enable_dsu = section.get("enable_dsu", str(self.enable_dsu)).lower() == '1'
-            self.mouse_mode = int(section.get("mouse_mode", self.mouse_mode if self.mouse_mode == 0 or self.mouse_mode == 1 or self.mouse_mode == 2 else 0))
-        
+            self.mouse_mode = int(section.get("mouse_mode", self.mouse_mode if self.mouse_mode in [0,1,2] else 0))
+            self.controller_type = int(section.get("controller_type", self.controller_type if self.controller_type in [0,1,2] else 0))
+
             if "Bluetooth" in config_parser:
                 section = config_parser["Bluetooth"]
                 configMacAddress =  section.get("mac_address", self.mac_address)
@@ -64,5 +66,6 @@ class Config:
             "save_mac_address": self.save_mac_address,
             "enable_dsu": self.enable_dsu,
             "mouse_mode": self.mouse_mode,
+            "controller_type": self.controller_type,
             "mac_address": self.mac_address
         }
