@@ -1,7 +1,7 @@
 from controllers.JoyconL import JoyConLeft
 from controllers.JoyconR import JoyConRight
 
-from dsu_server import controller_update
+from program.dsu.dsu_server import controller_update
 
 from config import Config
 from pynput.mouse import Controller, Button

@@ -184,14 +184,14 @@ def scroll_decoder(data):
     x_raw = ((data[1] & 0x0F) << 8) | data[0]
     y_raw = (data[2] << 4) | ((data[1] & 0xF0) >> 4)
 
-    # Centrer autour de zéro
+    # Center around zero
     x_center = (X_STICK_MAX + X_STICK_MIN) / 2
     y_center = (Y_STICK_MAX + Y_STICK_MIN) / 2
 
     x = x_raw - x_center
     y = y_raw - y_center
 
-    # Normaliser pour obtenir une plage [-32768, 32767]
+    # Normalize to get a range [-32768, 32767]
     x = int(max(-1, min(x / ((X_STICK_MAX - X_STICK_MIN) / 2), 1)) * 32767)
     y = int(max(-1, min(y / ((Y_STICK_MAX - Y_STICK_MIN) / 2), 1)) * 32767)
 

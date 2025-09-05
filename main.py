@@ -1,23 +1,29 @@
 import asyncio, os
 from bleak import BleakClient, BleakScanner
 from config import Config
-from controller_command import ControllerCommand, UUID_NOTIFY, UUID_CMD_RESPONSE
-from dsu_server import main_dsu
+from enum import Enum
+from program.controller_command import ControllerCommand, UUID_NOTIFY, UUID_CMD_RESPONSE
+from program.dsu.dsu_server import main_dsu
+
+from program.controller_def import ControllerManager
 
 # Check if the operating system is Windows
 if(os.name != 'nt'):
     print("This application is only supported on Windows.")
     exit(1)
 
-# Read the configuration from config.ini
-config = Config().getConfig()
-
+# Manufacture of Joy-Con 2
 manufact = {
     "id": 0x0553,  # Nintendo Co., Ltd. (https://www.bluetooth.com/specifications/assigned-numbers/company-identifiers/)
     "data-prefix": bytes([0x01, 0x00, 0x03, 0x7e, 0x05])  # Manufacturer data prefix for Joy-Con (I hope this prefix is correct, and it same for everyone)
 }
 
-clients = []  # List to hold connected clients
+# Read the configuration from config.ini
+config = Config().getConfig()
+
+# Manage connected controllers
+controllerManager = ControllerManager()
+
 
 # Function to scan for controllers
 async def scan_joycons():
@@ -87,24 +93,24 @@ async def init_controller(name, side, orientation, controller=0):
         print(f"Joy-Con {name} {side} not found.")
 
 async def handle_duo_joycons(client, side):
-    from control_type.duo_joycon import notify_duo_joycons
+    from program.combinaison.duo_joycon import notify_duo_joycons
 
-    async def notification_handler(sender, data): #Notification des données du controller
+    async def notification_handler(sender, data): # Notification handler for duo joy-cons
         asyncio.create_task(notify_duo_joycons(client, side, data))
 
-    def response_handler(sender, data): #Notification des réponses aux commandes du controller
+    def response_handler(sender, data): # Notification handler for controller command responses
         ControllerCommand().receive_response(client, data)
 
-    await client.start_notify(UUID_CMD_RESPONSE, response_handler) #Commencer à écouter les réponses aux commandes
+    await client.start_notify(UUID_CMD_RESPONSE, response_handler) # Starts to listen for controller command responses
 
-    await initSendControllerCmd(client, "Joy-Con") #Envoie des commandes d'initialisation au controller
+    await initSendControllerCmd(client, "Joy-Con") # Sends initialization commands to the controller
 
-    await client.stop_notify(UUID_CMD_RESPONSE) # Nous avons plus besoin d'écouter les réponses aux commandes
-    await client.start_notify(UUID_NOTIFY, notification_handler) # Commencer à écouter les notifications des données du controller
+    await client.stop_notify(UUID_CMD_RESPONSE) # No longer need to listen for command responses
+    await client.start_notify(UUID_NOTIFY, notification_handler) # Start listening for controller data notifications
 
-# Se référé aux commentaire qui sont dans la fonction au dessus (handle_duo_joycons)
+# Refer to the comments in the function above (handle_duo_joycons)
 async def handle_single_joycon(client, side, orientation):
-    from control_type.single_joycon import notify_single_joycons
+    from program.combinaison.single_joycon import notify_single_joycons
 
     async def notification_handler(sender, data):
         asyncio.create_task(notify_single_joycons(client, side, orientation, data))
@@ -135,17 +141,14 @@ async def initSendControllerCmd(client, controllerName):
             await controllerCommand.send_command(client, "JOY2_SAVE_MC_ADDR_STEP3")
             await controllerCommand.send_command(client, "JOY2_SAVE_MC_ADDR_STEP4")
 
-            print(f"MAC address {mac_addr1.hex()} + {mac_addr2.hex()} saved successfully.")
-
 
         await controllerCommand.send_command(client, "JOY2_CONNECTED_VIBRATION")
-        # Convert binary string (e.g., "0101") to hexadecimal string (e.g., "5")
 
-        if len(config['led_player']) != 4 or not all(c in '01' for c in config['led_player']): #Length is 4 and only contains '0' and '1'
+        if len(config['led_player']) != 4 or not all(c in '01' for c in config['led_player']):
             print("LED player incorrectly set in config.ini, defaulting to 0001.")
             config['led_player'] = "0001"
 
-        await controllerCommand.send_command(client, "JOY2_SET_PLAYER_LED", {"led_player": format(int(config['led_player'], 2), 'x')}) # Convert binary string to hex string
+        await controllerCommand.send_command(client, "JOY2_SET_PLAYER_LED", {"led_player": format(int(config['led_player'], 2), 'x')})
         await controllerCommand.send_command(client, "JOY2_INIT_SENSOR_DATA")
         await controllerCommand.send_command(client, "JOY2_START_SENSOR_DATA")
 
@@ -154,7 +157,7 @@ async def main():
     try:
         if(not config['orientation'] == 0 and not config['orientation'] == 1):
             print("Invalid orientation in config.ini. Please set 'orientation' to 0 (Vertical) or 1 (Horizontal).\nDefaulting to vertical.")
-            config['orientation'] = 0  # Default to vertical if invalid
+            config['orientation'] = 0 
 
         if config['controller'] == 0:
             await init_controller("Joy-Con", "Left", config['orientation'], 0)
@@ -182,17 +185,6 @@ async def main():
         for client in clients:
             await client.disconnect()
         print("All controllers disconnected.")
-
-
-#Used to get the manufacturer data from joycons
-#async def scan_all():
-    #devices = await BleakScanner.discover()
-    #for d in devices:
-    #    md = d.metadata.get("manufacturer_data", {})
-    #    if md:
-    #        for manu_id, data_bytes in md.items():
-    #            print(f"Device: {d.name}, ID: {manu_id}, Data: {data_bytes.hex()}")
-
 
 if __name__ == "__main__":
     asyncio.run(main())
