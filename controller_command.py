@@ -63,7 +63,7 @@ class ControllerCommand:
             # Convert hex string to bytes
             data_bytes = bytes.fromhex(data)
 
-            print(f"Sending command: {commandType} with data: {data_bytes.hex()}")
+            #print(f"Sending command: {commandType} with data: {data_bytes.hex()}")
 
             await client.write_gatt_char(UUID_CMD, data_bytes)
             
