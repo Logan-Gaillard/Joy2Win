@@ -4,6 +4,8 @@ import os
 import ctypes
 import struct
 
+from config import Config
+
 class JoyConRight:
     def __init__(self):
         self.name = "Joy-Con"
@@ -66,6 +68,10 @@ class JoyConRight:
         self.alertSent = False
         self.is_connected = False
 
+        
+        # Read the configuration from config.ini
+        self.config = Config().getConfig()
+
     async def update(self, datas):
         # Update button states based on the received data
         btnDatas = datas[4] << 8 | datas[5]
@@ -119,7 +125,9 @@ class JoyConRight:
         self.mouseBtn["Right"] = bool(btnDatas & 0x8000) #ZR
         self.mouseBtn["scrollX"], self.mouseBtn["scrollY"] = scroll_decoder(JoystickDatas)
 
-        #print(f"{self.mouseBtn['scrollX']}, {self.mouseBtn['scrollY']}")
+        if self.mouseBtn["scrollY"] < self.config["scroll_deadzone"] and self.mouseBtn["scrollY"] > self.config["scroll_deadzone"] * -1:
+            self.mouseBtn["scrollY"] = 0
+        # print(f"{self.mouseBtn['scrollX']}, {self.mouseBtn['scrollY']}")
 
         # Update battery level only if the new value is lower than the current one
         battery_raw = (datas[31]) | (datas[32] << 8)
