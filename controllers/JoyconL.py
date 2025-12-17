@@ -105,9 +105,6 @@ class JoyConLeft:
 
         self.analog_stick["X"], self.analog_stick["Y"] = joystick_decoder(JoystickDatas, self.orientation)
 
-        if self.mouseBtn["scrollY"] < self.config["scroll_deadzone"] and self.mouseBtn["scrollY"] > self.config["scroll_deadzone"] * -1:
-            self.mouseBtn["scrollY"] = 0
-
         self.mouseBtn["Left"] = bool(btnDatas & 0x0040) #L
         self.mouseBtn["Right"] = bool(btnDatas & 0x0080) #ZL
         self.mouseBtn["scrollX"], self.mouseBtn["scrollY"] = scroll_decoder(JoystickDatas)

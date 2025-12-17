@@ -10,7 +10,6 @@ class Config:
         "save_mac_address": False,
         "enable_dsu": False,
         "mouse_mode": 0,
-        "scroll_deadzone": 0,
         "mac_address": "FFFFFFFFFFFF"
     }
 
@@ -41,7 +40,6 @@ class Config:
             self.save_mac_address = section.get("save_mac_address", str(self.save_mac_address)).lower() == '1'
             self.enable_dsu = section.get("enable_dsu", str(self.enable_dsu)).lower() == '1'
             self.mouse_mode = int(section.get("mouse_mode", self.mouse_mode if self.mouse_mode == 0 or self.mouse_mode == 1 or self.mouse_mode == 2 else 0))
-            self.scroll_deadzone = int(section.get("scroll_deadzone", self.scroll_deadzone))
         
             if "Bluetooth" in config_parser:
                 section = config_parser["Bluetooth"]
@@ -66,6 +64,5 @@ class Config:
             "save_mac_address": self.save_mac_address,
             "enable_dsu": self.enable_dsu,
             "mouse_mode": self.mouse_mode,
-            "scroll_deadzone": self.scroll_deadzone,
             "mac_address": self.mac_address
         }
