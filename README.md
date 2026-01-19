@@ -68,7 +68,7 @@ Note: There are other options under Settings > Controller that you can enable / 
 **Why is this project temporary ?**  
 Currently, Joy-Con 2 controllers only work on Windows. Other operating systems are not supported due to how the controllers communicate. (Due to Joy-Con 2 communication protocol ?)  
   
-On this project's [Discord's server](https://discord.gg/gegfNZ5Ucz) somes people work hard to figure out how Switch 2 controllers communicate.  
+On this project's [Discord's server](https://discord.gg/LINK_TEMPORARY_REMOVED_BECAUSE_SOME_PEOPLE_DONT_READ_THE_WARNING!!!) somes people work hard to figure out how Switch 2 controllers communicate.  
 
 > [!WARNING]
 > **!! This Discord's server is not part of this project, so no help will be provided there !!**  
