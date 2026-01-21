@@ -47,6 +47,12 @@ Your Joy-Con 2 controllers are now connected to your Windows computer.
 
 To connect your controller for use with Steam games, In Steam, navigate to Settings > Controller > Begin Setup.
 
+If you're using Both Joy-Cons mode, you can paste the configuration below via "Paste from Clipboard" during device setup to enable remapping of every button via Steam Input. 
+```
+a:b4,b:b5,x:b6,y:b7,dpleft:b9,dpright:b8,dpup:b10,dpdown:b11,leftx:a0,lefty:a1,leftstick:b18,rightx:a3,righty:a4,rightstick:b19,leftshoulder:b2,lefttrigger:b0,rightshoulder:b3,righttrigger:b1,back:b13,start:b12,misc1:b21,misc3:b22,guide:b20,paddle1:b14,paddle2:b16,paddle3:b15,paddle4:b17,
+```
+This also enables the C button (M2) and identifies the SL and SR buttons on both Joy-Cons as rear paddles (L4/L5/R4/R5).
+
 Note: There are other options under Settings > Controller that you can enable / explore, like:
         - Use Nintendo Button Layout
         - Universal Face Button Glyphs (to match Nintendo's UI)
