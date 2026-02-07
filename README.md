@@ -51,7 +51,9 @@ If you're using Both Joy-Cons, you can quickly configure every button (inlcuding
 ```
 a:b4,b:b5,x:b6,y:b7,dpleft:b9,dpright:b8,dpup:b10,dpdown:b11,leftx:a0,lefty:a1,leftstick:b18,rightx:a3,righty:a4,rightstick:b19,leftshoulder:b2,lefttrigger:b0,rightshoulder:b3,righttrigger:b1,back:b13,start:b12,misc1:b21,misc3:b22,guide:b20,paddle1:b14,paddle2:b16,paddle3:b15,paddle4:b17,
 ```
-Then in Steam, go to **Settings** > **Controller** > (your JoyCon 2 pair) > **Begin Setup** / **Test Device Inputs** > **Paste from Clipboard**.
+Then during Setup, select **Paste from Clipboard**.
+
+(If you've already set up your controller, then **Paste from Clipboard** can be found under **Settings** > **Controller** > (your JoyCon 2 pair) > **Test Device Inputs**.)
 
 If successful, it should look like this:
 
