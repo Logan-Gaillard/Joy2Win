@@ -47,10 +47,24 @@ Your Joy-Con 2 controllers are now connected to your Windows computer.
 
 To connect your controller for use with Steam games, In Steam, navigate to Settings > Controller > Begin Setup.
 
+If you're using Both Joy-Cons, you can quickly configure every button (inlcuding the C button and the SL/SR buttons) by first copying the below:
+```
+a:b4,b:b5,x:b6,y:b7,dpleft:b9,dpright:b8,dpup:b10,dpdown:b11,leftx:a0,lefty:a1,leftstick:b18,rightx:a3,righty:a4,rightstick:b19,leftshoulder:b2,lefttrigger:b0,rightshoulder:b3,righttrigger:b1,back:b13,start:b12,misc1:b21,misc3:b22,guide:b20,paddle1:b14,paddle2:b16,paddle3:b15,paddle4:b17,
+```
+Then during Setup, select **Paste from Clipboard**.
+
+(If you've already set up your controller, then **Paste from Clipboard** can be found under **Settings** > **Controller** > (your JoyCon 2 pair) > **Test Device Inputs**.)
+
+If successful, it should look like this:
+
+<img width="1600" height="1000" alt="image" src="https://github.com/user-attachments/assets/8ecd941a-8cf5-4140-bab1-2684fa39523a" />
+
+The Capture button will be identified as "M1", the C button will be identified as "M2", and the SL/SR buttons on each JoyCon will be identified as "L4"/"L5"/"R4"/"R5".
+
 Note: There are other options under Settings > Controller that you can enable / explore, like:
-        - Use Nintendo Button Layout
-        - Universal Face Button Glyphs (to match Nintendo's UI)
-        - Test Device Inputs
+- Use Nintendo Button Layout
+- Universal Face Button Glyphs (to match Nintendo's UI)
+- Test Device Inputs
 
 ## ✨ Features
 
