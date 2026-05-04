@@ -6,7 +6,7 @@ class Config:
     _defaults = {
         "controller": 0,
         "orientation": 0,
-        "led_player": 0b0001,
+        "led_player": "0001",
         "save_mac_address": False,
         "enable_dsu": False,
         "mouse_mode": 0,
