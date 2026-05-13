@@ -2,55 +2,73 @@ import asyncio, os
 from bleak import BleakClient, BleakScanner
 from program.constant import MANUFACTURER_ID, ID_VENDOR, PRODUCT_JOYCON_RIGHT, PRODUCT_JOYCON_LEFT, GENERIC_ACCESS_DEVICE_NAME, LEFT_HID_REPORT_HANDLE
 import struct 
+from program.controllers.controllers import BaseController
+from program.controllers.joycons.left_joycons import LeftJoyCon
+from program.controllers.joycons.right_joycons import RightJoyCon
+
 
 # Check if the operating system is Windows
 if(os.name != 'nt'):
     print("This application is only supported on Windows.")
     exit(1)
 
-async def scan_devices():
+async def scan_devices(number_of_devices=1):
     print("Scanning for Joy-Con 2 devices...")
 
-    device_found = None
+    devices = []
     stop_event = asyncio.Event()
 
     def callback(device, adv_data):
-        nonlocal device_found
 
         manufacturer_data = adv_data.manufacturer_data.get(MANUFACTURER_ID)
         if manufacturer_data:
             vendor = struct.unpack('<H', manufacturer_data[3:5])[0]
             product = struct.unpack('<H', manufacturer_data[5:7])[0]
 
-            if vendor == ID_VENDOR and device_found is None:
-                if product == PRODUCT_JOYCON_RIGHT:
-                    print(f"Found Joy-Con Right: {device.address}")
-                    device_found = device
-                    stop_event.set()
-                elif product == PRODUCT_JOYCON_LEFT:
+            if any(d.device.address == device.address for d in device_found):
+                return
+
+            if vendor == ID_VENDOR:
+                if product == PRODUCT_JOYCON_LEFT:
                     print(f"Found Joy-Con Left: {device.address}")
-                    device_found = device
+                    devices.append()
+            
+                elif product == PRODUCT_JOYCON_RIGHT:
+                    print(f"Found Joy-Con Right: {device.address}")
+                    devices.append()
+
+                if len(devices) >= number_of_devices:
                     stop_event.set()
 
-    async with BleakScanner(callback) as scanner:
-        await stop_event.wait()
 
-    return device_found
+
+    async with BleakScanner(callback):
+        try:
+            await stop_event.wait()
+        except asyncio.CancelledError:
+            print("Device scanning cancelled.")
+        except Exception as e:
+            print(f"An error occurred during scanning: {e}")
+
+    return devices
 
 def notification_handler(_, data):
     print(f"Notification: {data.hex()}")
 
 async def main():
     try:
-        device = await scan_devices()
+        number_of_devices = 2
+        devices = await scan_devices(number_of_devices)
 
-        client = BleakClient(device)
-        await client.connect()
+        if not devices:
+            print("No Joy-Con 2 devices found.")
+            return
 
-        device_name = await client.read_gatt_char(GENERIC_ACCESS_DEVICE_NAME)
-        print(f"Connected to {device_name.decode('utf-8')}")
+        if len(devices) < number_of_devices:
+            print(f"Only found {len(devices)} device(s). Expected {number_of_devices}.")
+            return
 
-        await client.start_notify(LEFT_HID_REPORT_HANDLE - 1, notification_handler)
+
 
         while True:
             await asyncio.sleep(1)
