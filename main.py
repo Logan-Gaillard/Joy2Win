@@ -18,24 +18,28 @@ async def scan_devices(number_of_devices=1):
     devices = []
     stop_event = asyncio.Event()
 
-    def callback(device, adv_data):
+    async def callback(device, adv_data):
 
         manufacturer_data = adv_data.manufacturer_data.get(MANUFACTURER_ID)
         if manufacturer_data:
             vendor = struct.unpack('<H', manufacturer_data[3:5])[0]
             product = struct.unpack('<H', manufacturer_data[5:7])[0]
 
-            if any(d.device.address == device.address for d in device_found):
+            if any(d.device.address == device.address for d in devices):
                 return
 
             if vendor == ID_VENDOR:
                 if product == PRODUCT_JOYCON_LEFT:
                     print(f"Found Joy-Con Left: {device.address}")
-                    devices.append()
+                    joycon = LeftJoyCon(device)
+                    devices.append(joycon)
+                    await joycon.connect()
             
                 elif product == PRODUCT_JOYCON_RIGHT:
                     print(f"Found Joy-Con Right: {device.address}")
-                    devices.append()
+                    joycon = RightJoyCon(device)
+                    devices.append(joycon)
+                    await joycon.connect()
 
                 if len(devices) >= number_of_devices:
                     stop_event.set()
@@ -67,13 +71,13 @@ async def main():
         if len(devices) < number_of_devices:
             print(f"Only found {len(devices)} device(s). Expected {number_of_devices}.")
             return
-
-
+        
+        print(f"Successfully connected to {len(devices)} device(s). Starting notifications...")
+        
+        await asyncio.gather(*(joycon.start_notify() for joycon in devices))
 
         while True:
             await asyncio.sleep(1)
-
-
 
     except Exception as e:
         print(f"An error occurred: {e}")
