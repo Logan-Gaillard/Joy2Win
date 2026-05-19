@@ -34,12 +34,44 @@ class Config:
         config_parser.read(self._config_path)
         if "Controller" in config_parser:
             section = config_parser["Controller"]
-            self.type_controller = int(section.get("type_controller", self.type_controller))
-            self.orientation = int(section.get("orientation", self.orientation))
-            self.led_player = str(section.get("led_player", self.led_player))
-            self.enable_dsu = section.get("enable_dsu", str(self.enable_dsu)).lower() == '1'
-            self.mouse_mode = int(section.get("mouse_mode", self.mouse_mode if self.mouse_mode == 0 or self.mouse_mode == 1 or self.mouse_mode == 2 else 0))
             
+            # !!! Type Controller !!!#
+            controller_type = int(section.get("type_controller", self.type_controller))
+            if controller_type in [0, 1]:
+                self.type_controller = controller_type
+            else:
+                print(f"Invalid type_controller value in {self._config_path}. Using default: {self.type_controller}")
+
+            # !!! Orientation !!!#
+            orientation = int(section.get("orientation", self.orientation))
+            if orientation in [0, 1]:
+                self.orientation = orientation
+            else:
+                print(f"Invalid orientation value in {self._config_path}. Using default: {self.orientation}")
+                self.orientation = int(section.get("orientation", self.orientation))
+
+            # !!! Player LED !!!#
+            led_player = str(section.get("led_player", self.led_player))
+            if led_player.isdigit() and 0 <= int(led_player) <= 15:
+                self.led_player = led_player
+            else:
+                print(f"Invalid led_player value in {self._config_path}. Using default: {self.led_player}")
+
+            # !!! Enable DSU !!!#
+            enableDsu = section.get("enable_dsu", str(self.enable_dsu)).lower()
+            if enableDsu in ['0', '1']:
+                self.enable_dsu = enableDsu == '1'
+            else:
+                print(f"Invalid enable_dsu value in {self._config_path}. Using default: {self.enable_dsu}")
+
+            # !!! Mouse Mode !!!#
+            mouse_mode = int(section.get("mouse_mode", self.mouse_mode))
+            if mouse_mode in [0, 1, 2]:
+                self.mouse_mode = mouse_mode
+            else:
+                print(f"Invalid mouse_mode value in {self._config_path}. Using default: {self.mouse_mode}")
+
+            # !!! MAC Address !!!#
             configMacAddress = section.get("mac_address", self.mac_address)
             if(configMacAddress and len(configMacAddress) >= 12 and len(configMacAddress) <= 17 and all(c in "0123456789ABCDEF:-" for c in configMacAddress.upper())): # Valid MAC address format like AABBCCDDEEFF
                 configMacAddress = configMacAddress.replace(":", "")

@@ -58,7 +58,6 @@ async def scan_devices(number_of_devices=1):
 
 async def main():
     try:
-        print(config.getConfig()["mac_address"].hex().upper())
         number_of_devices = 2
         devices = await scan_devices(number_of_devices)
 
