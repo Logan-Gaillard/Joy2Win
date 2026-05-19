@@ -1,6 +1,6 @@
 import asyncio, os
-from bleak import BleakClient, BleakScanner
-from program.constant import MANUFACTURER_ID, ID_VENDOR, PRODUCT_JOYCON_RIGHT, PRODUCT_JOYCON_LEFT, GENERIC_ACCESS_DEVICE_NAME, LEFT_HID_REPORT_HANDLE
+from bleak import BleakScanner
+from program.constant import MANUFACTURER_ID, ID_VENDOR, PRODUCT_JOYCON_RIGHT, PRODUCT_JOYCON_LEFT
 import struct 
 from program.controllers.controllers import BaseController
 from program.controllers.joycons.left_joycons import LeftJoyCon
@@ -46,8 +46,6 @@ async def scan_devices(number_of_devices=1):
                 if len(devices) >= number_of_devices:
                     stop_event.set()
 
-
-
     async with BleakScanner(callback):
         try:
             await stop_event.wait()
@@ -58,8 +56,6 @@ async def scan_devices(number_of_devices=1):
 
     return devices
 
-def notification_handler(_, data):
-    print(f"Notification: {data.hex()}")
 
 async def main():
     try:
@@ -76,7 +72,7 @@ async def main():
         
         print(f"Successfully connected to {len(devices)} device(s). Starting notifications...")
         
-        await asyncio.gather(*(joycon.start_notify() for joycon in devices))
+        await asyncio.gather(*(joycon.init_and_pairing() for joycon in devices))
 
         while True:
             await asyncio.sleep(1)
