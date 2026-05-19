@@ -7,7 +7,8 @@ class LeftJoyCon(BaseController):
         super().__init__(device)
 
     def notification_handler(self, _, data):
-        print(f"Left Joy-Con Notification: {data.hex()}")
+        #print(f"Left Joy-Con Notification: {data.hex()}")
+        pass
 
     def update_datas(self):
         print("Updating Left Joy-Con data...")
