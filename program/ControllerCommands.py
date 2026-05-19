@@ -8,7 +8,6 @@ COMMAND_TYPE = {
     # Example command structure
     # "COMMAND_NAME": {
     #   "data": "0000000XYZ",
-    #   "wait_response": True/False, (Need to wait for a response or not)
     #   "args": [ (List of required arguments for the command)
     #       {"name": "ARG_NAME", (Name of the argument)
     #        "letter": "X", (Single letter identifier to replace in the hex string)
@@ -16,8 +15,11 @@ COMMAND_TYPE = {
     #   ]
     # }
     "SET_LED": {"data": "0991010700080000X00000000000000", "args": [{"name": "led_mask", "letter": "X", "length": 2}]},
+    "PLAY_VIBRATION_SAMPLE": {"data": "0A91010200040000X000000","args": [{"name": "id", "letter": "X", "length": 2}]},
 
-    "EXCHANGE_BLUETOOTH": {"data": "15910101000e00000002XY", "args": [{"name": "mac-addr1", "letter": "X", "length": 12},{"name": "mac-addr2", "letter": "Y", "length": 12}]},
+
+    "SET_FEATURE": {"data": "0C91010200040000X000000","args": [{"name": "flags", "letter": "X", "length": 2}]},
+    "ENABLE_FEATURE": {"data": "0C91010400040000X000000","args": [{"name": "flags", "letter": "X", "length": 2}]},
 }
 
 
@@ -29,7 +31,6 @@ class ControllerCommands:
 
     async def send_command(self, commandType, args=None):
         try:
-            print(f"Preparing to send command: {commandType} with args: {args}")
 
             command = COMMAND_TYPE[commandType] # Get the command details
             if command is None:
@@ -53,6 +54,8 @@ class ControllerCommands:
                     
             data_bytes = bytes.fromhex(data)
 
+            print(f"Sending command: {commandType} with data: {data}, bytes: {data_bytes.hex()}")
+
             await self.controller.controller_client.write_gatt_char(self.controller.command_handle, data_bytes)
         
         except Exception as e:
@@ -72,6 +75,6 @@ class ControllerCommands:
         return response
 
     async def receive_response(self, _, data):
-        print(f"Received response: {data.hex()}")
+        # print(f"Received response: {data.hex()}")
         self.response_data = data
         self.waiting_response = False

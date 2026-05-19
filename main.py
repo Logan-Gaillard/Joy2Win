@@ -71,7 +71,7 @@ async def main():
         
         print(f"Successfully connected to {len(devices)} device(s). Starting notifications...")
         
-        await asyncio.gather(*(joycon.init_and_pairing() for joycon in devices))
+        await asyncio.gather(*(joycon.init_and_ready() for joycon in devices))
 
         while True:
             await asyncio.sleep(1)
