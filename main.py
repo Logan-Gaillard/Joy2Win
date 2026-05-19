@@ -5,19 +5,18 @@ import struct
 from program.controllers.controllers import BaseController
 from program.controllers.joycons.left_joycons import LeftJoyCon
 from program.controllers.joycons.right_joycons import RightJoyCon
-
+from program.config import Config
 
 # Check if the operating system is Windows
 if(os.name != 'nt'):
     print("This application is only supported on Windows.")
     exit(1)
 
+config = Config()
 devices: list[BaseController] = []
 
 async def scan_devices(number_of_devices=1):
     print("Scanning for Joy-Con 2 devices...")
-
-    
     stop_event = asyncio.Event()
 
     async def callback(device, adv_data):
@@ -59,6 +58,7 @@ async def scan_devices(number_of_devices=1):
 
 async def main():
     try:
+        print(config.getConfig()["mac_address"].hex().upper())
         number_of_devices = 2
         devices = await scan_devices(number_of_devices)
 
