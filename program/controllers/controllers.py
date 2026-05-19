@@ -13,6 +13,13 @@ class BaseController:
             print(f"Connected to {self.device.address}")
         else:
             print("Failed to connect.")
+    
+    async def disconnect(self):
+        await self.controller_client.disconnect()
+        if not self.controller_client.is_connected:
+            print(f"Disconnected from {self.device.address}")
+        else:
+            print("Failed to disconnect.")
         
     async def start_notify(self):
         await self.controller_client.start_notify(self.hid_report_handle, self.notification_handler)

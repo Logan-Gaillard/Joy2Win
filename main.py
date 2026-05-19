@@ -12,10 +12,12 @@ if(os.name != 'nt'):
     print("This application is only supported on Windows.")
     exit(1)
 
+devices: list[BaseController] = []
+
 async def scan_devices(number_of_devices=1):
     print("Scanning for Joy-Con 2 devices...")
 
-    devices = []
+    
     stop_event = asyncio.Event()
 
     async def callback(device, adv_data):
@@ -82,5 +84,16 @@ async def main():
     except Exception as e:
         print(f"An error occurred: {e}")
 
+    finally:
+        print("Disconnect controllers and exiting...")
+        for joycon in devices:
+            await joycon.disconnect()
+        exit(0)
+
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        pass
+    except Exception as e:
+        print(f"An error occurred: {e}")
