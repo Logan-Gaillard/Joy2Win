@@ -1,4 +1,4 @@
-import asyncio, os
+import asyncio, os, platform
 from bleak import BleakClient, BleakScanner
 from config import Config
 from controller_command import ControllerCommand, UUID_NOTIFY, UUID_CMD_RESPONSE
@@ -148,6 +148,16 @@ async def initSendControllerCmd(client, controllerName):
         await controllerCommand.send_command(client, "JOY2_SET_PLAYER_LED", {"led_player": format(int(config['led_player'], 2), 'x')}) # Convert binary string to hex string
         await controllerCommand.send_command(client, "JOY2_INIT_SENSOR_DATA")
         await controllerCommand.send_command(client, "JOY2_START_SENSOR_DATA")
+
+        if platform.system() == 'Windows':
+            version = platform.version()
+            build_number = int(version.split('.')[-1])
+            if build_number >= 22000:
+                from bleak.backends.winrt.client import BleakClientWinRT
+                from winrt.windows.devices.bluetooth import BluetoothLEPreferredConnectionParameters
+                backend = client._backend
+                if isinstance(backend, BleakClientWinRT):
+                    backend._requester.request_preferred_connection_parameters(BluetoothLEPreferredConnectionParameters.throughput_optimized)
 
 
 async def main():
