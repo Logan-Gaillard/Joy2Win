@@ -1,6 +1,6 @@
 import asyncio, os
 from bleak import BleakScanner
-from program.constant import MANUFACTURER_ID, ID_VENDOR, PRODUCT_JOYCON_RIGHT, PRODUCT_JOYCON_LEFT
+from program.constant import BOLD_TEXT, RESET_TEXT, RED_TEXT, MANUFACTURER_ID, ID_VENDOR, PRODUCT_JOYCON_RIGHT, PRODUCT_JOYCON_LEFT
 import struct 
 from program.controllers.controllers import BaseController
 from program.controllers.joycons.left_joycons import LeftJoyCon
@@ -9,14 +9,14 @@ from program.config import Config
 
 # Check if the operating system is Windows
 if(os.name != 'nt'):
-    print("This application is only supported on Windows.")
+    print(f"{RED_TEXT}This application is only supported on Windows.{RESET_TEXT}")
     exit(1)
 
 config = Config()
 devices: list[BaseController] = []
 
 async def scan_devices(number_of_devices=1):
-    print("Scanning for Joy-Con 2 devices...")
+    print(f"Scanning for {BOLD_TEXT}{number_of_devices}{RESET_TEXT} Joy-Con 2 devices...")
     stop_event = asyncio.Event()
 
     async def callback(device, adv_data):
@@ -58,15 +58,15 @@ async def scan_devices(number_of_devices=1):
 
 async def main():
     try:
-        number_of_devices = 2
+        number_of_devices = config.type_controller == 0 and 2 or 1
         devices = await scan_devices(number_of_devices)
 
         if not devices:
-            print("No Joy-Con 2 devices found.")
+            print(f"{RED_TEXT}No Joy-Con 2 devices found.{RESET_TEXT}")
             return
 
         if len(devices) < number_of_devices:
-            print(f"Only found {len(devices)} device(s). Expected {number_of_devices}.")
+            print(f"{RED_TEXT}Only found {len(devices)} device(s). Expected {number_of_devices}.{RESET_TEXT}")
             return
         
         print(f"Successfully connected to {len(devices)} device(s). Starting notifications...")

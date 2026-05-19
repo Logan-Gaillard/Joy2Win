@@ -1,5 +1,6 @@
 import configparser
 import os
+from program.constant import RED_TEXT, GREEN_TEXT, YELLOW_TEXT, RESET_TEXT, BOLD_TEXT
 
 class Config:
     _instance = None
@@ -11,6 +12,7 @@ class Config:
         "enable_dsu": False,
         "mouse_mode": 0,
     }
+    issues = 0
 
     # Singleton pattern to ensure only one instance of Config exists
     def __new__(cls, config_path="config.ini"):
@@ -40,36 +42,40 @@ class Config:
             if controller_type in [0, 1]:
                 self.type_controller = controller_type
             else:
-                print(f"Invalid type_controller value in {self._config_path}. Using default: {self.type_controller}")
-
+                print(f"{RED_TEXT}Invalid type_controller value in {self._config_path}. Using default: {self.type_controller}{RESET_TEXT}")
+                self.issues += 1
+                
             # !!! Orientation !!!#
             orientation = int(section.get("orientation", self.orientation))
             if orientation in [0, 1]:
                 self.orientation = orientation
             else:
-                print(f"Invalid orientation value in {self._config_path}. Using default: {self.orientation}")
-                self.orientation = int(section.get("orientation", self.orientation))
+                print(f"{RED_TEXT}Invalid orientation value in {self._config_path}. Using default: {self.orientation}{RESET_TEXT}")
+                self.issues += 1
 
             # !!! Player LED !!!#
             led_player = str(section.get("led_player", self.led_player))
             if led_player.isdigit() and 0 <= int(led_player) <= 15:
                 self.led_player = led_player
             else:
-                print(f"Invalid led_player value in {self._config_path}. Using default: {self.led_player}")
+                print(f"{RED_TEXT}Invalid led_player value in {self._config_path}. Using default: {self.led_player}{RESET_TEXT}")
+                self.issues += 1
 
             # !!! Enable DSU !!!#
             enableDsu = section.get("enable_dsu", str(self.enable_dsu)).lower()
             if enableDsu in ['0', '1']:
                 self.enable_dsu = enableDsu == '1'
             else:
-                print(f"Invalid enable_dsu value in {self._config_path}. Using default: {self.enable_dsu}")
+                print(f"{RED_TEXT}Invalid enable_dsu value in {self._config_path}. Using default: {self.enable_dsu}{RESET_TEXT}")
+                self.issues += 1
 
             # !!! Mouse Mode !!!#
             mouse_mode = int(section.get("mouse_mode", self.mouse_mode))
             if mouse_mode in [0, 1, 2]:
                 self.mouse_mode = mouse_mode
             else:
-                print(f"Invalid mouse_mode value in {self._config_path}. Using default: {self.mouse_mode}")
+                print(f"{RED_TEXT}Invalid mouse_mode value in {self._config_path}. Using default: {self.mouse_mode}{RESET_TEXT}")
+                self.issues += 1
 
             # !!! MAC Address !!!#
             configMacAddress = section.get("mac_address", self.mac_address)
@@ -78,11 +84,14 @@ class Config:
                 configMacAddress = configMacAddress.replace("-", "")
                 self.mac_address = bytes.fromhex(configMacAddress)[::-1] # Convert mac to little-endian format
             else:
-                print(f"Invalid MAC address in {self._config_path}. Using default: {self.mac_address}")
-                self.mac_address = self._defaults["mac_address"]
+                print(f"{RED_TEXT}Invalid MAC address in {self._config_path}. Using default: {self.mac_address}{RESET_TEXT}")
+                self.issues += 1
+
+            issues_msg = f"{YELLOW_TEXT}{BOLD_TEXT}{self.issues} issue(s) found." if self.issues != 0 else ""
+            print(f"{GREEN_TEXT}Configuration loaded ! {issues_msg}{RESET_TEXT}")
 
         else:
-            print(f"Section 'Controller' not found in {self._config_path}. Using default values.")
+            print(f"{RED_TEXT}Section 'Controller' not found in {self._config_path}. Using default values.{RESET_TEXT}")
             self._init_defaults()
 
     def getConfig(self):
