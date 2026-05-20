@@ -54,6 +54,9 @@ class BaseController:
         print(f"Setting LED mask to: {led_mask}")
         await self.commands.send_command_and_wait_response("SET_LED", {"led_mask": f"{led_mask:02x}"})
 
+        # Play connected and ready vibration sample
+        await self.commands.send_command_and_wait_response("PLAY_VIBRATION_SAMPLE", {"id": "05"})
+
         if platform.system() == 'Windows':
             version = platform.version()
             build_number = int(version.split('.')[-1])
@@ -64,12 +67,36 @@ class BaseController:
                 if isinstance(backend, BleakClientWinRT):
                     backend._requester.request_preferred_connection_parameters(BluetoothLEPreferredConnectionParameters.throughput_optimized)
 
-        # Play connected and ready vibration sample
-        await self.commands.send_command_and_wait_response("PLAY_VIBRATION_SAMPLE", {"id": "05"})
-
     def notification_handler(self, _, data):
-        print(f"Notification: {data.hex()}")
-        pass
+        self.update_datas(data)
 
-    def update_datas(self):
-        pass
+    def update_datas(self, data):
+        report_counter = data[0x0 : 0x4]
+
+        buttons = data[0x4 : 0x4 + 0x4]
+        left_stick = data[0xA : 0xA + 0x3]
+        right_stick = data[0xD : 0xD + 0x3]
+
+        mouse = data[0x10 : 0x10 + 0x8]
+
+        magnetometer = data[0x19 : 0x19 + 0x6]
+
+        volt_battery = data[0x1F : 0x1F + 0x2]
+        state_batery = data[0x21 : 0x21 + 0x1]
+        current_battery = data[0x22 : 0x22 + 0x2] # IDK is it
+
+        motion = data[0x2A : 0x2A + 0x12]
+
+        #clear console
+        print("\033c", end="")
+
+        print(
+            f"Report Counter: {report_counter.hex()}\n"
+            f"Buttons: {buttons.hex()}\n"
+            f"Left Stick: {left_stick.hex()}\n"
+            f"Right Stick: {right_stick.hex()}\n"
+            f"Mouse: {mouse.hex()}\n"
+            f"Magnetometer: {magnetometer.hex()}"
+            f"Battery: {volt_battery.hex()} {state_batery.hex()} {current_battery.hex()}\n"
+            f"Motion: {motion.hex()}\n"
+        )

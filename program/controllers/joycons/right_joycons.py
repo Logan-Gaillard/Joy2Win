@@ -6,9 +6,8 @@ class RightJoyCon(BaseController):
     def __init__(self, device: BleakClient):
         super().__init__(device)
 
-    def notification_handler(self, _, data):
-        #print(f"Right Joy-Con Notification: {data.hex()}")
-        pass
-
-    def update_datas(self):
-        print("Updating Right Joy-Con data...")
+    def update_datas(self, data):
+        if self.hid_report_handle == 0x000A - 1:
+            super().update_datas(data)
+        else:
+            print("Updating Right Joy-Con data...")
