@@ -5,7 +5,7 @@ from program.constant import RED_TEXT, GREEN_TEXT, YELLOW_TEXT, RESET_TEXT, BOLD
 class Config:
     _instance = None
     _defaults = {
-        "mac_address": "FFFFFFFFFFFF",
+        "controller_driver": "XBOX",
         "type_controller": 0,
         "orientation": 0,
         "led_player": "0001",
@@ -36,7 +36,15 @@ class Config:
         config_parser.read(self._config_path)
         if "Controller" in config_parser:
             section = config_parser["Controller"]
-            
+
+            # !!! Controller Driver !!!#
+            controller_driver = section.get("controller_driver", self.controller_driver)
+            if controller_driver in ["XBOX", "DS4", "CUSTOM"]:
+                self.controller_driver = controller_driver
+            else:
+                print(f"{RED_TEXT}Invalid controller_driver value in {self._config_path}. Using default: {self.controller_driver}{RESET_TEXT}")
+                self.issues += 1
+
             # !!! Type Controller !!!#
             controller_type = int(section.get("type_controller", self.type_controller))
             if controller_type in [0, 1]:
@@ -77,16 +85,6 @@ class Config:
                 print(f"{RED_TEXT}Invalid mouse_mode value in {self._config_path}. Using default: {self.mouse_mode}{RESET_TEXT}")
                 self.issues += 1
 
-            # !!! MAC Address !!!#
-            configMacAddress = section.get("mac_address", self.mac_address)
-            if(configMacAddress and len(configMacAddress) >= 12 and len(configMacAddress) <= 17 and all(c in "0123456789ABCDEF:-" for c in configMacAddress.upper())): # Valid MAC address format like AABBCCDDEEFF
-                configMacAddress = configMacAddress.replace(":", "")
-                configMacAddress = configMacAddress.replace("-", "")
-                self.mac_address = bytes.fromhex(configMacAddress)[::-1] # Convert mac to little-endian format
-            else:
-                print(f"{RED_TEXT}Invalid MAC address in {self._config_path}. Using default: {self.mac_address}{RESET_TEXT}")
-                self.issues += 1
-
             issues_msg = f"{YELLOW_TEXT}{BOLD_TEXT}{self.issues} issue(s) found." if self.issues != 0 else ""
             print(f"{GREEN_TEXT}Configuration loaded ! {issues_msg}{RESET_TEXT}")
 
@@ -96,7 +94,7 @@ class Config:
 
     def getConfig(self):
         return {
-            "mac_address": self.mac_address,
+            "controller_driver": self.controller_driver,
             "type_controller": self.type_controller,
             "orientation": self.orientation,
             "led_player": self.led_player,
