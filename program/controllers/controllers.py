@@ -141,16 +141,20 @@ class BaseController:
 
         await self.start_notify()
     
-        await self.commands.send_command_and_wait_response("SET_FEATURE", {"flags": f"{feature_flags:02x}"})
-        await self.commands.send_command_and_wait_response("ENABLE_FEATURE", {"flags": f"{feature_flags:02x}"})
+        await self.commands.send_command_and_wait_response("SET_FEATURE", {"flags": feature_flags})
+        await self.commands.send_command_and_wait_response("ENABLE_FEATURE", {"flags": feature_flags})
 
         # Set led with configuration
-        led_mask = int(self.config["led_player"], 10)
+        led_mask = int(self.config["led_player"])
         print(f"Setting LED mask to: {led_mask}")
-        await self.commands.send_command_and_wait_response("SET_LED", {"led_mask": f"{led_mask:02x}"})
+        await self.commands.send_command_and_wait_response("SET_LED", {"led_mask": led_mask})
 
         # Play connected and ready vibration sample
-        await self.commands.send_command_and_wait_response("PLAY_VIBRATION_SAMPLE", {"id": "05"})
+        await self.commands.send_command_and_wait_response("PLAY_VIBRATION_SAMPLE", {"id": 0x05})
+
+        response_primary_stick_calibration = await self.commands.send_command_and_wait_response("READ_DATA", {"size": 0x0B, "address": 0x001FC040})
+
+        print(f"Primary stick calibration data: {response_primary_stick_calibration.hex()}")
 
         if platform.system() == 'Windows':
             version = platform.version()
