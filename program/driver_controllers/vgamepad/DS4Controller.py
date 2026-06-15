@@ -61,6 +61,21 @@ class DS4Controller(DriverController):
 
             DriverController.driver.update()
 
+    def set_sticks(self):
+        controller_stick = self.controller.to_controller_format()["sticks"]["primary"]
+
+        from program.controllers.joycons.left_joycons import LeftJoyCon
+        from program.controllers.joycons.right_joycons import RightJoyCon
+        if isinstance(self.controller, LeftJoyCon):
+                DriverController.driver.left_joystick_float(controller_stick["x"], -controller_stick["y"])
+        elif isinstance(self.controller, RightJoyCon):
+            if self.controller.isAlone:
+                DriverController.driver.left_joystick_float(controller_stick["x"], -controller_stick["y"])
+            else:
+                DriverController.driver.right_joystick_float(controller_stick["x"], -controller_stick["y"])
+
+        DriverController.driver.update()
+
     def notify_update(self):
         mouse_enabled = self.mouse_interract()
 

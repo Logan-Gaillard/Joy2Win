@@ -34,10 +34,10 @@ class LeftJoyCon(BaseController):
             print("Updating Left Joy-Con data...")
             
         if self.controller_orientation == "HORIZONTAL":
-            self.left_stick = {
-                "x": -self.left_stick["y"],
-                "y": self.left_stick["x"]
-            }
+            temp_x = self.left_stick["x"]
+            temp_y = self.left_stick["y"]
+            self.left_stick["x"] = -temp_y
+            self.left_stick["y"] = temp_x
 
     def to_controller_format(self):
         return {
@@ -53,7 +53,20 @@ class LeftJoyCon(BaseController):
         }
     
     def get_dictionnary_driver(self):
-        controller_pressed_buttons = self.to_controller_format()["buttons"]
+        if self.config["controller_driver"] == "CUSTOM":
+            return {
+                "Minus": 1,
+                "L_STICK": 2,
+                "CAPTURE": 3,
+                "DPAD_DOWN": 4,
+                "DPAD_UP": 5,
+                "DPAD_RIGHT": 6,
+                "DPAD_LEFT": 7,
+                "SR_LEFT": 8,
+                "SL_LEFT": 9,
+                "L": 10,
+                "ZL": 11
+            }
 
         if not self.isAlone:
             return {
