@@ -95,6 +95,6 @@ On this project's [Discord's server](https://discord.gg/LINK_TEMPORARY_REMOVED_B
 ## Author
 Made by **Octokling**
 
-Helped by :  
+I never do this kind of thing without these people:  
 - narr_the_reg
 - ndeadly

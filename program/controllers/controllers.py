@@ -7,38 +7,63 @@ from program.driver_controllers.vgamepad.XboxController import XboxController
 from program.driver_controllers.pyvjoy import CustomController
 from program.constant import RED_TEXT, GREEN_TEXT, YELLOW_TEXT, RESET_TEXT, BOLD_TEXT
 
+class Axis:
+    def __init__(self):
+        self.min = 0
+        self.center = 0
+        self.max = 0
+class Deadzone:
+    def __init__(self):
+        self.x = 0.1
+        self.y = 0.1
+class StickOptions:
+    def __init__(self):
+        self.x_axis = Axis()
+        self.y_axis = Axis()
+        self.deadzone = Deadzone()
+
+def normalize_axe(value, axis: Axis):
+        if value < axis.min:
+            value = axis.min
+        elif value > axis.max:
+            value = axis.max
+
+        normalized = 0
+        if value < axis.center:
+            normalized = (value - axis.center) / (axis.center - axis.min)
+        elif value == axis.center:
+            normalized = 0
+        else:
+            normalized = (value - axis.center) / (axis.max - axis.center)
+
+        return normalized
+
 class BaseController:
     hid_report_handle = 0x000A - 1
     command_handle = 0x0014 - 1
     response_command_handle = 0x001A - 1
 
-    button_format = [
-        {"button": "Y", "data": 0x01, "byte": 0},
-        {"button": "X", "data": 0x02, "byte": 0},
-        {"button": "B", "data": 0x04, "byte": 0},
-        {"button": "A", "data": 0x08, "byte": 0},
-        {"button": "SR_RIGHT", "data": 0x10, "byte": 0},
-        {"button": "SL_RIGHT", "data": 0x20, "byte": 0},
-        {"button": "R", "data": 0x40, "byte": 0},
-        {"button": "ZR", "data": 0x80, "byte": 0},
+    button_format = []
 
-        {"button": "Minus", "data": 0x01, "byte": 1},
-        {"button": "Plus", "data": 0x02, "byte": 1},
-        {"button": "R_STICK", "data": 0x04, "byte": 1},
-        {"button": "L_STICK", "data": 0x08, "byte": 1},
-        {"button": "HOME", "data": 0x10, "byte": 1},
-        {"button": "CAPTURE", "data": 0x20, "byte": 1},
-        {"button": "C", "data": 0x40, "byte": 1},
+    mouse_buttons_watch = {
+        "LEFT": None,
+        "RIGHT": None,
+        "MIDDLE": None,
+    }
 
-        {"button": "DPAD_DOWN", "data": 0x01, "byte": 2},
-        {"button": "DPAD_UP", "data": 0x02, "byte": 2},
-        {"button": "DPAD_RIGHT", "data": 0x04, "byte": 2},
-        {"button": "DPAD_LEFT", "data": 0x08, "byte": 2},
-        {"button": "SR_LEFT", "data": 0x10, "byte": 2},
-        {"button": "SL_LEFT", "data": 0x20, "byte": 2},
-        {"button": "L", "data": 0x40, "byte": 2},
-        {"button": "ZL", "data": 0x80, "byte": 2}
-    ]
+    def unpack_12bit_triplet(self, data):
+        a = (data[0] | ((data[1] & 0x0F) << 8))
+        b = ((data[1] >> 4) | (data[2] << 4))
+        return a, b
+
+
+    def unpack_12bit_sequence(self, data):
+        out = []
+        view = memoryview(data).cast('B')
+        for i in range(0, len(view), 3):
+            out.extend(self.unpack_12bit_triplet(view[i:i+3]))
+
+        return out
 
     def __init__(self, device: BleakClient):
         self.device = device
@@ -47,13 +72,8 @@ class BaseController:
         self.config = Config().getConfig()
         self.driver_controller = None
         self.controller_id = random.randint(10000, 99999)
-
-        self.mouse_buttons_watch = {
-            "LEFT": None,
-            "RIGHT": None,
-            "MIDDLE": None,
-            "SCROLL": None,
-        }
+        self.controller_orientation = "VERTICAL" if self.config["orientation"] == 0 or self.config["type_controller"] == 0 else "HORIZONTAL"
+        self.isAlone = self.config["type_controller"] == 1
 
         if self.config["controller_driver"] in ["XBOX", "DS4", "CUSTOM"]:
             self.controller_client_type = self.config["controller_driver"]
@@ -67,6 +87,8 @@ class BaseController:
                 print(f"{RED_TEXT}Invalid controller_driver value in config. Using default: XBOX{RESET_TEXT}")
 
         self.pressed_buttons = []
+
+        self.sticks_options = StickOptions()
 
         self.left_stick = {
             "x": 0,
@@ -152,10 +174,6 @@ class BaseController:
         # Play connected and ready vibration sample
         await self.commands.send_command_and_wait_response("PLAY_VIBRATION_SAMPLE", {"id": 0x05})
 
-        response_primary_stick_calibration = await self.commands.send_command_and_wait_response("READ_DATA", {"size": 0x0B, "address": 0x001FC040})
-
-        print(f"Primary stick calibration data: {response_primary_stick_calibration.hex()}")
-
         if platform.system() == 'Windows':
             version = platform.version()
             build_number = int(version.split('.')[-1])
@@ -196,16 +214,32 @@ class BaseController:
                 if button["button"] in self.pressed_buttons:
                     self.pressed_buttons.remove(button["button"])
 
-        # TODO : Read SPI and include saved calibrations
+        left_x_axis = normalize_axe(((left_stick[1] & 0x0F) << 8) | left_stick[0], self.sticks_options.x_axis)
+        left_y_axis = normalize_axe((left_stick[2] << 4) | ((left_stick[1] & 0xF0) >> 4), self.sticks_options.y_axis)
+
+        if abs(left_x_axis) < self.sticks_options.deadzone.x and abs(left_y_axis) < self.sticks_options.deadzone.y:
+            left_x_axis = 0
+            left_y_axis = 0
+
         self.left_stick = {
-            "x": ((left_stick[1] & 0x0F) << 8) | left_stick[0],
-            "y": (left_stick[2] << 4) | ((left_stick[1] & 0xF0) >> 4)
+            "raw-x": left_x_axis,
+            "raw-y": left_y_axis,
+            "x": left_x_axis,
+            "y": left_y_axis
         }
 
-        # TODO : Read SPI and include saved calibrations
+        right_x_axis = normalize_axe(((right_stick[1] & 0x0F) << 8) | right_stick[0], self.sticks_options.x_axis)
+        right_y_axis = normalize_axe((right_stick[2] << 4) | ((right_stick[1] & 0xF0) >> 4), self.sticks_options.y_axis)
+
+        if abs(right_x_axis) < self.sticks_options.deadzone.x and abs(right_y_axis) < self.sticks_options.deadzone.y:
+            right_x_axis = 0
+            right_y_axis = 0
+
         self.right_stick = {
-            "x": ((right_stick[1] & 0x0F) << 8) | right_stick[0],
-            "y": (right_stick[2] << 4) | ((right_stick[1] & 0xF0) >> 4)
+            "raw-x": right_x_axis,
+            "raw-y": right_y_axis,
+            "x": right_x_axis,
+            "y": right_y_axis
         }
         
         mouse_pos = {
@@ -245,4 +279,7 @@ class BaseController:
         }
 
     def to_controller_format(self):
+        pass
+
+    def get_dictionnary_driver(self):
         pass

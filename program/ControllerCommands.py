@@ -79,7 +79,7 @@ class ControllerCommands:
                         raise ValueError(f"Missing required argument: {name}")
                     
                     actual_size = (val.bit_length() + 7) // 8
-                    print(f"Argument {name}: value={hex(val)}, size={size} bytes, actual_size={actual_size} bytes")
+                    # print(f"Argument {name}: value={hex(val)}, size={size} bytes, actual_size={actual_size} bytes")
                 
                     if actual_size > size:
                         raise ValueError(f"Argument {name} exceeds maximum size. Expected {size} - got {actual_size}.")

@@ -7,6 +7,9 @@ if TYPE_CHECKING:
 
 class DriverController:
     mouse_enabled_by = None
+    pressed_buttons = []
+
+    driver = None
     
     def __init__(self, controller: BaseController):
         self.controller = controller
@@ -23,6 +26,7 @@ class DriverController:
         mouse_data = self.controller.to_controller_format()["mouse"]
         button_data = self.controller.to_controller_format()["buttons"]
         button_mapping = self.controller.mouse_buttons_watch
+        stick_data = self.controller.to_controller_format()["sticks"]["primary"]
         mouse_mode = self.config["mouse_mode"]
 
         if mouse_data and (DriverController.mouse_enabled_by == None or DriverController.mouse_enabled_by == self.controller.controller_id):
@@ -63,4 +67,9 @@ class DriverController:
                     self.mouse.release(Button.middle)
                     self.pressed_mouse_buttons.discard("MIDDLE")
 
-        return (DriverController.mouse_enabled_by == None or DriverController.mouse_enabled_by == self.controller.controller_id)
+                if stick_data:
+                    scroll_x = stick_data["raw-x"] / 2
+                    scroll_y = stick_data["raw-y"] / 2
+                    self.mouse.scroll(scroll_x, scroll_y)
+
+        return (DriverController.mouse_enabled_by == self.controller.controller_id)
