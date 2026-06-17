@@ -10,6 +10,7 @@ class DriverController:
     pressed_buttons = []
 
     driver = None
+    controllers: list[BaseController] = []
     
     def __init__(self, controller: BaseController):
         self.controller = controller
@@ -18,6 +19,8 @@ class DriverController:
         if self.config["mouse_mode"] != 0:
             self.mouse = Controller()
             self.pressed_mouse_buttons = set()
+        
+        DriverController.controllers.append(self.controller)
         
     def notify_update(self):
         pass

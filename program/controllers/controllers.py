@@ -1,4 +1,5 @@
 from bleak import BleakClient
+import asyncio
 from program.ControllerCommands import ControllerCommands
 from program.config import Config
 import platform, struct, random
@@ -23,25 +24,26 @@ class StickOptions:
         self.deadzone = Deadzone()
 
 def normalize_axe(value, axis: Axis):
-        if value < axis.min:
-            value = axis.min
-        elif value > axis.max:
-            value = axis.max
+    if value < axis.min:
+        value = axis.min
+    elif value > axis.max:
+        value = axis.max
 
+    normalized = 0
+    if value < axis.center:
+        normalized = (value - axis.center) / (axis.center - axis.min)
+    elif value == axis.center:
         normalized = 0
-        if value < axis.center:
-            normalized = (value - axis.center) / (axis.center - axis.min)
-        elif value == axis.center:
-            normalized = 0
-        else:
-            normalized = (value - axis.center) / (axis.max - axis.center)
+    else:
+        normalized = (value - axis.center) / (axis.max - axis.center)
 
-        return normalized
+    return normalized
 
 class BaseController:
     hid_report_handle = 0x000A - 1
     command_handle = 0x0014 - 1
     response_command_handle = 0x001A - 1
+    vibration_handle = 0x0012 - 1
 
     button_format = []
 
@@ -74,6 +76,8 @@ class BaseController:
         self.controller_id = random.randint(10000, 99999)
         self.controller_orientation = "VERTICAL" if self.config["orientation"] == 0 or self.config["type_controller"] == 0 else "HORIZONTAL"
         self.isAlone = self.config["type_controller"] == 1
+        self.vibration_counter = 0
+        self.loop = asyncio.get_event_loop()
 
         if self.config["controller_driver"] in ["XBOX", "DS4", "CUSTOM"]:
             self.controller_client_type = self.config["controller_driver"]
@@ -168,7 +172,6 @@ class BaseController:
 
         # Set led with configuration
         led_mask = int(self.config["led_player"])
-        print(f"Setting LED mask to: {led_mask}")
         await self.commands.send_command_and_wait_response("SET_LED", {"led_mask": led_mask})
 
         # Play connected and ready vibration sample
@@ -283,3 +286,30 @@ class BaseController:
 
     def get_dictionnary_driver(self):
         pass
+
+    def rumble(self, ampl1, ampl2):
+        print(f"Rumble command received: ampl1={ampl1}, ampl2={ampl2}")
+        left_vibration_data = bytearray(0x10)
+        packed = (
+                ((ampl1 & 0x3FF) << 30) |
+                ((320 & 0x3FF) << 20) |
+                ((ampl2 & 0x3FF) << 10) |
+                ((160 & 0x3FF))
+        )
+        left_vibration_data[0] = (0x05 << 4) | self.vibration_counter
+        left_vibration_data[1:6] = packed.to_bytes(5, byteorder='little')
+
+        right_vibration_data = bytearray(0x10)
+        packed = (
+                ((ampl1 & 0x3FF) << 30) |
+                ((320 & 0x3FF) << 20) |
+                ((ampl2 & 0x3FF) << 10) |
+                ((160 & 0x3FF))
+        )
+        right_vibration_data[0] = (0x05 << 4) | self.vibration_counter
+        right_vibration_data[1:6] = packed.to_bytes(5, byteorder='little')
+
+        vibration_data = left_vibration_data + right_vibration_data
+        vibration_int = int.from_bytes(vibration_data, byteorder='big')
+        asyncio.run_coroutine_threadsafe(self.commands.send_command("SEND_VIBRATION", {"data": vibration_int}, self.vibration_handle), self.loop)
+        self.vibration_counter = (self.vibration_counter + 1) & 0xf

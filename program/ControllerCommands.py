@@ -45,6 +45,13 @@ COMMAND_TYPE = {
             {"name": "address", "size": 0x4}
         ]
     },
+
+    "SEND_VIBRATION": {
+        "data": [0x00, "data", 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+        "args": [
+            {"name": "data", "size": 0x20},
+        ]
+    }
 }
 
 
@@ -54,9 +61,8 @@ class ControllerCommands:
         self.waiting_response = False
         self.response_data = None
 
-    async def send_command(self, commandType, args=None):
+    async def send_command(self, commandType, args=None, force_handle=None):
         try:
-
             command = COMMAND_TYPE[commandType] # Get the command details
             if command is None:
                 print(f"Command {commandType} not found in COMMAND_TYPE.")
@@ -94,9 +100,9 @@ class ControllerCommands:
 
             data_bytes = bytes(final_data if command.get("args") and args else data)                    
 
-            # print(f"Sending command: {commandType} with data: {data_bytes.hex()}")
+            print(f"Sending command: {commandType} with data: {data_bytes.hex()}")
 
-            await self.controller.controller_client.write_gatt_char(self.controller.command_handle, data_bytes)
+            await self.controller.controller_client.write_gatt_char(force_handle or self.controller.command_handle, data_bytes)
         
         except Exception as e:
             print(f"Error occurred while sending command: {e}")

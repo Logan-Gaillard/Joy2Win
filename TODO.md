@@ -10,9 +10,9 @@
 - [x] Compute factory stick calibration
 - [ ] Include gyroscope with DSU
 - [ ] Include vibrations with DSU
-- [ ] Include vibrations with vgamepad
+- [x] Include vibrations with vgamepad
 - [x] Include mouse controller
 - [ ] Include GUI frendly interface instead of CLI
-- [ ] Include in this GUI settings for and it hot refresh (Joycon type, etc...)
+- [ ] Include in this GUI settings for and it hot refresh for settings (Joycon type, etc...)
 - [ ] Make any configuration for ayant needs (Mouses sensibility, type de vibrations etc...)
 - [x] Convert python into windows executable

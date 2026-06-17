@@ -15,6 +15,12 @@ class XboxController(DriverController):
         if DriverController.driver is None:
             DriverController.driver = vg.VX360Gamepad()
 
+        DriverController.driver.register_notification(callback_function=self.vibration_callback)
+
+    def vibration_callback(self, client, target, large_motor, small_motor, led_number, user_data):
+        for controller in DriverController.controllers:
+            controller.rumble(large_motor, small_motor)
+
     def set_input(self):
         pressed_controller_button = self.controller.to_controller_format()["buttons"]
 
