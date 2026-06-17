@@ -4,7 +4,7 @@ from program.config import Config
 import platform, struct, random
 from program.driver_controllers.vgamepad.DS4Controller import DS4Controller
 from program.driver_controllers.vgamepad.XboxController import XboxController
-from program.driver_controllers.pyvjoy import CustomController
+from program.driver_controllers.pyvjoy.CustomController import CustomController
 from program.constant import RED_TEXT, GREEN_TEXT, YELLOW_TEXT, RESET_TEXT, BOLD_TEXT
 
 class Axis:

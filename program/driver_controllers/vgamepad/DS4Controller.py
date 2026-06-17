@@ -82,6 +82,3 @@ class DS4Controller(DriverController):
         if not mouse_enabled:
             self.set_input()
             self.set_sticks()
-
-        #clear console
-        # prin0

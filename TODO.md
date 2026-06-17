@@ -5,13 +5,14 @@
 - [x] Compute HID data
 - [x] Simulate DS4 (Playstation 4) controller
 - [x] Simulate XBOX controller 
-- [ ] Custom controller 
+- [x] Custom controller 
 - [x] SPI stick calibration data
 - [x] Compute factory stick calibration
+- [ ] Include gyroscope with DSU
 - [ ] Include vibrations with DSU
 - [ ] Include vibrations with vgamepad
 - [x] Include mouse controller
-- [ ] Include gyroscope with DSU
 - [ ] Include GUI frendly interface instead of CLI
 - [ ] Include in this GUI settings for and it hot refresh (Joycon type, etc...)
 - [ ] Make any configuration for ayant needs (Mouses sensibility, type de vibrations etc...)
+- [x] Convert python into windows executable
